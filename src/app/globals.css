@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+@theme {
+  --color-parkga-50: #f0fdf4;
+  --color-parkga-100: #dcfce7;
+  --color-parkga-200: #bbf7d0;
+  --color-parkga-300: #86efac;
+  --color-parkga-400: #4ade80;
+  --color-parkga-500: #22c55e;
+  --color-parkga-600: #16a34a;
+  --color-parkga-700: #15803d;
+  --color-parkga-800: #166534;
+  --color-parkga-900: #14532d;
+  --color-parkga-950: #052e16;
+}
+
+@layer base {
+  body {
+    @apply bg-white text-gray-900 antialiased;
+  }
+}
