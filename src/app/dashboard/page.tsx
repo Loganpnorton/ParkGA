@@ -23,6 +23,9 @@ import {
   Home,
   Plus,
   TrendingUp,
+  Star,
+  MessageSquare,
+  X,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/supabase";
@@ -48,6 +51,12 @@ type Spot = Database["public"]["Tables"]["spots"]["Row"] & {
 };
 
 type Tab = "bookings" | "listings" | "profile";
+
+interface ReviewFormData {
+  bookingId: string;
+  spotId: string;
+  spotTitle: string;
+}
 
 const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: "bookings", label: "My Bookings", icon: Calendar },
@@ -292,6 +301,81 @@ function DashboardInner() {
     router.refresh();
   }
 
+  // Review modal state
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [reviewForm, setReviewForm] = useState<ReviewFormData | null>(null);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewHoverRating, setReviewHoverRating] = useState(0);
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+  const [reviewSuccess, setReviewSuccess] = useState(false);
+
+  // Check if booking already has a review
+  async function hasExistingReview(bookingId: string): Promise<boolean> {
+    const { data } = await supabase
+      .from("reviews")
+      .select("id")
+      .eq("booking_id", bookingId)
+      .maybeSingle();
+    return !!data;
+  }
+
+  // Open review modal
+  async function openReviewModal(booking: Booking) {
+    const alreadyReviewed = await hasExistingReview(booking.id);
+    if (alreadyReviewed) {
+      setReviewError("You have already reviewed this booking.");
+      setTimeout(() => setReviewError(null), 3000);
+      return;
+    }
+    setReviewForm({
+      bookingId: booking.id,
+      spotId: booking.spot_id,
+      spotTitle: booking.spot?.title ?? "Parking Spot",
+    });
+    setReviewRating(0);
+    setReviewComment("");
+    setReviewError(null);
+    setReviewSuccess(false);
+    setReviewModalOpen(true);
+  }
+
+  // Submit review
+  async function handleSubmitReview() {
+    if (!reviewForm || reviewRating === 0) return;
+    setReviewSubmitting(true);
+    setReviewError(null);
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setReviewError("You must be signed in.");
+      setReviewSubmitting(false);
+      return;
+    }
+
+    const { error } = await supabase.from("reviews").insert({
+      booking_id: reviewForm.bookingId,
+      guest_id: user.id,
+      spot_id: reviewForm.spotId,
+      rating: reviewRating,
+      comment: reviewComment.trim() || null,
+    });
+
+    if (error) {
+      setReviewError(error.message);
+      setReviewSubmitting(false);
+      return;
+    }
+
+    setReviewSuccess(true);
+    setReviewSubmitting(false);
+    setTimeout(() => {
+      setReviewModalOpen(false);
+      fetchBookings();
+    }, 1500);
+  }
+
   // Cancel booking
   async function handleCancelBooking(bookingId: string) {
     const { error } = await supabase
@@ -426,19 +510,28 @@ function DashboardInner() {
                       </div>
                     </div>
                     {/* Actions */}
-                    {isUpcoming && (
-                      <div className="mt-3 flex items-center gap-2 border-t border-gray-100 pt-3">
-                        <Link href={`/listings/${booking.spot_id}`} className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50">
-                          View Spot
-                        </Link>
-                        {booking.status === "pending" && (
-                          <button onClick={() => handleCancelBooking(booking.id)}
-                            className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-50">
-                            Cancel
-                          </button>
-                        )}
-                      </div>
-                    )}
+                    <div className="mt-3 flex items-center gap-2 border-t border-gray-100 pt-3">
+                      {isUpcoming && (
+                        <>
+                          <Link href={`/listings/${booking.spot_id}`} className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50">
+                            View Spot
+                          </Link>
+                          {booking.status === "pending" && (
+                            <button onClick={() => handleCancelBooking(booking.id)}
+                              className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-50">
+                              Cancel
+                            </button>
+                          )}
+                        </>
+                      )}
+                      {(booking.status === "completed" || (booking.status === "confirmed" && new Date(booking.end_time) < new Date())) && (
+                        <button onClick={() => openReviewModal(booking)}
+                          className="inline-flex items-center gap-1 rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-100">
+                          <Star className="h-3 w-3" />
+                          Leave a Review
+                        </button>
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -628,6 +721,111 @@ function DashboardInner() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ REVIEW MODAL ═══ */}
+      {reviewModalOpen && reviewForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-gray-900">Leave a Review</h3>
+              <button type="button" onClick={() => setReviewModalOpen(false)}
+                className="rounded-lg p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <p className="mt-1 text-sm text-gray-500">{reviewForm.spotTitle}</p>
+
+            {/* Error */}
+            {reviewError && (
+              <div className="mt-4 flex items-center gap-1.5 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">
+                <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                {reviewError}
+              </div>
+            )}
+
+            {/* Success */}
+            {reviewSuccess && (
+              <div className="mt-4 flex items-center gap-2 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">
+                <CheckCircle className="h-4 w-4" />
+                Review submitted! Thank you.
+              </div>
+            )}
+
+            {!reviewSuccess && (
+              <>
+                {/* Star Rating */}
+                <div className="mt-5">
+                  <label className="text-sm font-medium text-gray-700">Rating</label>
+                  <div className="mt-2 flex items-center gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setReviewRating(star)}
+                        onMouseEnter={() => setReviewHoverRating(star)}
+                        onMouseLeave={() => setReviewHoverRating(0)}
+                        className="p-0.5 transition-transform hover:scale-110"
+                      >
+                        <Star
+                          className={`h-7 w-7 ${
+                            (reviewHoverRating || reviewRating) >= star
+                              ? "fill-amber-400 text-amber-400"
+                              : "text-gray-300"
+                          }`}
+                        />
+                      </button>
+                    ))}
+                    <span className="ml-2 text-xs text-gray-400">
+                      {reviewRating > 0
+                        ? ["", "Poor", "Fair", "Good", "Very Good", "Excellent"][reviewRating]
+                        : "Click to rate"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Comment */}
+                <div className="mt-4">
+                  <label htmlFor="review-comment" className="text-sm font-medium text-gray-700">Comment <span className="text-gray-400">(optional)</span></label>
+                  <textarea
+                    id="review-comment"
+                    rows={3}
+                    value={reviewComment}
+                    onChange={(e) => setReviewComment(e.target.value)}
+                    placeholder="Share your experience..."
+                    maxLength={500}
+                    className="mt-1.5 block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm text-gray-900 transition-colors focus:border-parkga-500 focus:outline-none focus:ring-2 focus:ring-parkga-500/20"
+                  />
+                  <p className="mt-1 text-right text-[10px] text-gray-400">{reviewComment.length}/500</p>
+                </div>
+
+                {/* Submit */}
+                <div className="mt-5 flex justify-end gap-3 border-t border-gray-100 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setReviewModalOpen(false)}
+                    className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSubmitReview}
+                    disabled={reviewRating === 0 || reviewSubmitting}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {reviewSubmitting ? (
+                      <><Loader2 className="h-4 w-4 animate-spin" /> Submitting...</>
+                    ) : (
+                      <><Star className="h-4 w-4" /> Submit Review</>
+                    )}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
