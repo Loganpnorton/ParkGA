@@ -7,7 +7,7 @@ const footerLinks = {
     links: [
       { href: "/listings", label: "Browse Spots" },
       { href: "/how-it-works", label: "How It Works" },
-      { href: "/host", label: "List Your Space" },
+      { href: "/host/new", label: "List Your Space" },
     ],
   },
   company: {

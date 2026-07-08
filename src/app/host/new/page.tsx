@@ -284,6 +284,22 @@ export default function NewListingPage() {
       return;
     }
 
+    // Check if the user has connected Stripe before allowing publish
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("stripe_account_id")
+      .eq("id", user.id)
+      .single();
+
+    if (!profile?.stripe_account_id) {
+      setError(
+        "You must connect a Stripe account before publishing a listing. " +
+          "Go to your Dashboard → My Listings to connect Stripe first."
+      );
+      setSubmitting(false);
+      return;
+    }
+
     const imageUrls: string[] = [];
     for (let i = 0; i < form.files.length; i++) {
       const file = form.files[i];

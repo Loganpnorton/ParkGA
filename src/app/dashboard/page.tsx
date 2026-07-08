@@ -121,11 +121,15 @@ function DashboardInner() {
   const [stripeOnboarding, setStripeOnboarding] = useState(false);
   const [stripeError, setStripeError] = useState<string | null>(null);
 
-  // Read query params for Stripe return/refresh
+  // Read query params for Stripe return/refresh and tab
   useEffect(() => {
     const stripeParam = searchParams.get("stripe");
     if (stripeParam === "success") setStripeStatus("success");
     else if (stripeParam === "refresh") setStripeStatus("refresh");
+    const tabParam = searchParams.get("tab");
+    if (tabParam && (tabParam === "bookings" || tabParam === "listings" || tabParam === "profile")) {
+      setActiveTab(tabParam);
+    }
   }, [searchParams]);
 
   // Check auth + fetch profile
@@ -543,6 +547,46 @@ function DashboardInner() {
       {/* ═══ MY LISTINGS (Host) ═══ */}
       {activeTab === "listings" && (
         <div>
+          {/* Stripe Connect Warning */}
+          {profile && !profile.stripe_account_id && (
+            <div className="mb-6 rounded-xl border-2 border-amber-300 bg-amber-50 p-5 shadow-sm">
+              <div className="flex items-start gap-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100">
+                  <AlertCircle className="h-5 w-5 text-amber-600" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-sm font-bold text-amber-800">
+                    ⚠️ Connect Stripe to receive payments
+                  </h3>
+                  <p className="mt-1 text-sm text-amber-700">
+                    You need to connect a Stripe account before you can publish
+                    listings and receive payouts. Guests won't be able to book
+                    your spots until this is set up.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleStripeOnboard}
+                    disabled={stripeOnboarding}
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {stripeOnboarding ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <ExternalLink className="h-4 w-4" />
+                    )}
+                    Connect with Stripe
+                  </button>
+                  {stripeError && (
+                    <p className="mt-2 flex items-center gap-1 text-xs text-red-600">
+                      <AlertCircle className="h-3 w-3" />
+                      {stripeError}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="mb-6 flex items-center justify-between">
             <p className="text-sm text-gray-500">{myListings.length} listing{myListings.length !== 1 ? "s" : ""}</p>
             <Link href="/host/new"
@@ -709,7 +753,7 @@ function DashboardInner() {
                 <label className="block text-sm font-medium text-gray-700">Account type</label>
                 <div className="mt-1.5">
                   <span className="inline-flex items-center rounded-full bg-parkga-100 px-3 py-1 text-sm font-medium text-parkga-700">
-                    {profile?.role === "host" ? "Host" : profile?.role === "admin" ? "Admin" : "Guest"}
+                    Member
                   </span>
                 </div>
               </div>

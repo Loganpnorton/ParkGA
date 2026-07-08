@@ -52,7 +52,7 @@ export default function HomePage() {
                 Find a Spot
               </Link>
               <Link
-                href="/host"
+                href="/host/new"
                 className="rounded-lg border border-gray-300 px-6 py-3 text-base font-semibold text-gray-700 transition-colors hover:bg-gray-50"
               >
                 List Your Space

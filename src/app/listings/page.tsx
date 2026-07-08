@@ -504,6 +504,9 @@ export default function ListingsPage() {
               filteredSpots.map((spot) => {
                 const isActive =
                   spot.id === (hoveredId ?? selectedId);
+                const price = spot.price_per_hour
+                  ? `$${spot.price_per_hour}`
+                  : `$${spot.price_per_event}`;
                 return (
                   <Marker
                     key={spot.id}
@@ -516,16 +519,13 @@ export default function ListingsPage() {
                   >
                     <button
                       type="button"
-                      className={`flex items-center gap-1 rounded-full px-2 py-1 text-xs font-bold shadow-md transition-all ${
+                      className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold shadow-lg transition-all ${
                         isActive
-                          ? "scale-110 bg-parkga-600 text-white"
-                          : "bg-white text-gray-800 hover:scale-105"
+                          ? "scale-110 bg-gray-900 text-white shadow-xl"
+                          : "bg-white text-gray-900 shadow-md hover:scale-110 hover:bg-gray-900 hover:text-white hover:shadow-xl"
                       }`}
                     >
-                      <MapPin className="h-3 w-3" />
-                      {spot.price_per_hour
-                        ? `$${spot.price_per_hour}`
-                        : `$${spot.price_per_event}`}
+                      {price}
                     </button>
                   </Marker>
                 );
@@ -537,13 +537,14 @@ export default function ListingsPage() {
                 longitude={activeMapSpot.lng}
                 latitude={activeMapSpot.lat}
                 anchor="bottom"
+                offset={[0, -20]}
                 onClose={() => {
                   setSelectedId(null);
                   setHoveredId(null);
                 }}
                 closeButton={true}
                 closeOnClick={false}
-                className="[&_.mapboxgl-popup-content]:!rounded-xl [&_.mapboxgl-popup-content]:!p-0 [&_.mapboxgl-popup-content]:!shadow-lg"
+                className="[&_.mapboxgl-popup-content]:!rounded-xl [&_.mapboxgl-popup-content]:!p-0 [&_.mapboxgl-popup-content]:!shadow-lg [&_.mapboxgl-popup-close-button]:!flex [&_.mapboxgl-popup-close-button]:!h-6 [&_.mapboxgl-popup-close-button]:!w-6 [&_.mapboxgl-popup-close-button]:!items-center [&_.mapboxgl-popup-close-button]:!justify-center [&_.mapboxgl-popup-close-button]:!rounded-full [&_.mapboxgl-popup-close-button]:!bg-white/90 [&_.mapboxgl-popup-close-button]:!text-gray-500 [&_.mapboxgl-popup-close-button]:!text-sm [&_.mapboxgl-popup-close-button]:!font-bold [&_.mapboxgl-popup-close-button]:!shadow-sm [&_.mapboxgl-popup-close-button]:!m-1.5 [&_.mapboxgl-popup-close-button]:hover:!bg-gray-100 [&_.mapboxgl-popup-close-button]:hover:!text-gray-700"
               >
                 <div className="max-w-[240px] p-3">
                   <h4 className="text-sm font-semibold text-gray-900 line-clamp-2">
