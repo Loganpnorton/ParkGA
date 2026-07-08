@@ -156,7 +156,8 @@ export async function POST(req: NextRequest) {
       end_time,
       total_price: totalAmountCents / 100,
       status: "pending",
-      payment_intent_id: null, // will be set on webhook
+      payment_intent_id: null,
+      checkout_session_id: session.id, // used by webhook for idempotency
     });
 
     if (bookingError) {
