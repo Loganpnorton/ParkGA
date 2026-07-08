@@ -542,12 +542,25 @@ export default function ListingsPage() {
                   setSelectedId(null);
                   setHoveredId(null);
                 }}
-                closeButton={true}
+                closeButton={false}
                 closeOnClick={false}
-                className="[&_.mapboxgl-popup-content]:!rounded-xl [&_.mapboxgl-popup-content]:!p-0 [&_.mapboxgl-popup-content]:!shadow-lg [&_.mapboxgl-popup-close-button]:!flex [&_.mapboxgl-popup-close-button]:!h-6 [&_.mapboxgl-popup-close-button]:!w-6 [&_.mapboxgl-popup-close-button]:!items-center [&_.mapboxgl-popup-close-button]:!justify-center [&_.mapboxgl-popup-close-button]:!rounded-full [&_.mapboxgl-popup-close-button]:!bg-white/90 [&_.mapboxgl-popup-close-button]:!text-gray-500 [&_.mapboxgl-popup-close-button]:!text-sm [&_.mapboxgl-popup-close-button]:!font-bold [&_.mapboxgl-popup-close-button]:!shadow-sm [&_.mapboxgl-popup-close-button]:!m-1.5 [&_.mapboxgl-popup-close-button]:hover:!bg-gray-100 [&_.mapboxgl-popup-close-button]:hover:!text-gray-700"
+                className="[&_.mapboxgl-popup-content]:!rounded-xl [&_.mapboxgl-popup-content]:!p-0 [&_.mapboxgl-popup-content]:!shadow-lg"
               >
-                <div className="max-w-[240px] p-3">
-                  <h4 className="text-sm font-semibold text-gray-900 line-clamp-2">
+                <div className="relative max-w-[240px] p-3">
+                  {/* Custom close button */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedId(null);
+                      setHoveredId(null);
+                    }}
+                    className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-gray-500 shadow-sm transition-colors hover:bg-gray-100 hover:text-gray-700"
+                    aria-label="Close popup"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+
+                  <h4 className="pr-8 text-sm font-semibold text-gray-900 line-clamp-2">
                     {activeMapSpot.title}
                   </h4>
                   <p className="mt-1 flex items-center gap-1 text-xs text-gray-500">

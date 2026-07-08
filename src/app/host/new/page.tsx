@@ -4,6 +4,7 @@ import { useState, useRef, FormEvent, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import dynamic from "next/dynamic";
+import { toast } from "sonner";
 import {
   ArrowLeft,
   ArrowRight,
@@ -279,23 +280,7 @@ export default function NewListingPage() {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      setError("You must be signed in to list a spot.");
-      setSubmitting(false);
-      return;
-    }
-
-    // Check if the user has connected Stripe before allowing publish
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("stripe_account_id")
-      .eq("id", user.id)
-      .single();
-
-    if (!profile?.stripe_account_id) {
-      setError(
-        "You must connect a Stripe account before publishing a listing. " +
-          "Go to your Dashboard → My Listings to connect Stripe first."
-      );
+      toast.error("You must be signed in to list a spot.");
       setSubmitting(false);
       return;
     }
@@ -311,7 +296,7 @@ export default function NewListingPage() {
         .upload(filePath, file);
 
       if (uploadErr) {
-        setError(`Failed to upload image ${i + 1}: ${uploadErr.message}`);
+        toast.error(`Failed to upload image ${i + 1}. Please try again.`);
         setSubmitting(false);
         return;
       }
@@ -327,27 +312,53 @@ export default function NewListingPage() {
       if (val) featuresJson[key] = true;
     }
 
-    const { error: insertErr } = await supabase.from("spots").insert({
-      host_id: user.id,
-      title: form.title.trim(),
-      description: form.description.trim(),
-      address: form.address.trim(),
-      lat: parseFloat(form.lat),
-      lng: parseFloat(form.lng),
-      price_per_hour: form.price_per_hour ? parseFloat(form.price_per_hour) : null,
-      price_per_event: form.price_per_event ? parseFloat(form.price_per_event) : null,
-      features: featuresJson,
-      images: imageUrls,
-    });
+    try {
+      const { error: insertErr } = await supabase.from("spots").insert({
+        host_id: user.id,
+        title: form.title.trim(),
+        description: form.description.trim(),
+        address: form.address.trim(),
+        lat: parseFloat(form.lat),
+        lng: parseFloat(form.lng),
+        price_per_hour: form.price_per_hour ? parseFloat(form.price_per_hour) : null,
+        price_per_event: form.price_per_event ? parseFloat(form.price_per_event) : null,
+        features: featuresJson,
+        images: imageUrls,
+      });
 
-    if (insertErr) {
-      setError(insertErr.message);
+      if (insertErr) {
+        throw insertErr;
+      }
+
+      // Listing saved successfully — now check if Stripe onboarding is needed
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("stripe_account_id")
+        .eq("id", user.id)
+        .single();
+
+      if (profile && !profile.stripe_account_id) {
+        // No Stripe account — redirect to onboarding, then back to dashboard
+        const res = await fetch("/api/stripe/onboard", { method: "POST" });
+        const data = await res.json();
+
+        if (res.ok && data.url) {
+          window.location.href = data.url;
+          return;
+        }
+
+        // If onboarding API fails, still show success — they can connect later
+        toast.info(
+          "Your listing was saved! You can connect Stripe later from your Dashboard."
+        );
+      }
+
+      setSuccess(true);
+    } catch (err) {
+      toast.error("Something went wrong while saving your listing. Please try again.");
+    } finally {
       setSubmitting(false);
-      return;
     }
-
-    setSuccess(true);
-    setSubmitting(false);
   }
 
   // ── Progress ──────────────────────────────────────────────────────
@@ -636,6 +647,9 @@ export default function NewListingPage() {
               {/* Map preview */}
               {hasCoordinates && MAPBOX_TOKEN && mapCenter && (
                 <div className="overflow-hidden rounded-xl border border-gray-200">
+                  <p className="px-3 pt-2 text-xs text-gray-500">
+                    Drag the pin to adjust your exact location.
+                  </p>
                   <div className="h-[250px] w-full sm:h-[300px]">
                     <Map
                       mapboxAccessToken={MAPBOX_TOKEN}
@@ -651,6 +665,15 @@ export default function NewListingPage() {
                           longitude={parseFloat(form.lng)}
                           latitude={parseFloat(form.lat)}
                           anchor="bottom"
+                          draggable={true}
+                          onDragEnd={(e) => {
+                            const { lng, lat } = e.lngLat;
+                            setForm((prev) => ({
+                              ...prev,
+                              lat: lat.toFixed(6),
+                              lng: lng.toFixed(6),
+                            }));
+                          }}
                         >
                           <div className="relative">
                             <MapPin className="h-8 w-8 text-parkga-600 drop-shadow-md" />
