@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef, FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState, useEffect, useRef, FormEvent } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import {
   Calendar,
@@ -11,11 +11,17 @@ import {
   Camera,
   Save,
   LogOut,
+  CreditCard,
+  ExternalLink,
+  CheckCircle,
+  AlertCircle,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/supabase";
 
-type Profile = Database["public"]["Tables"]["profiles"]["Row"];
+type Profile = Database["public"]["Tables"]["profiles"]["Row"] & {
+  stripe_account_id?: string | null;
+};
 
 type Tab = "bookings" | "listings" | "profile";
 
@@ -25,8 +31,9 @@ const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
   { id: "profile", label: "Profile", icon: User },
 ];
 
-export default function DashboardPage() {
+function DashboardInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -34,6 +41,7 @@ export default function DashboardPage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [sessionLoading, setSessionLoading] = useState(true);
+  const [stripeStatus, setStripeStatus] = useState<string | null>(null);
 
   // Profile form state
   const [name, setName] = useState("");
@@ -44,6 +52,20 @@ export default function DashboardPage() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Stripe onboarding state
+  const [stripeOnboarding, setStripeOnboarding] = useState(false);
+  const [stripeError, setStripeError] = useState<string | null>(null);
+
+  // Read query params for Stripe return/refresh
+  useEffect(() => {
+    const stripeParam = searchParams.get("stripe");
+    if (stripeParam === "success") {
+      setStripeStatus("success");
+    } else if (stripeParam === "refresh") {
+      setStripeStatus("refresh");
+    }
+  }, [searchParams]);
 
   // Check auth session
   useEffect(() => {
@@ -77,7 +99,7 @@ export default function DashboardPage() {
         .single();
 
       if (data) {
-        setProfile(data);
+        setProfile(data as Profile);
         setName(data.name ?? "");
         setPhone(data.phone ?? "");
         setAvatarUrl(data.avatar_url);
@@ -93,7 +115,6 @@ export default function DashboardPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file
     if (!["image/jpeg", "image/png", "image/gif", "image/webp"].includes(file.type)) {
       setSaveError("Please select a JPEG, PNG, GIF, or WebP image.");
       return;
@@ -126,12 +147,10 @@ export default function DashboardPage() {
 
     let newAvatarUrl = avatarUrl;
 
-    // Upload avatar if changed
     if (avatarFile) {
       const fileExt = avatarFile.name.split(".").pop() ?? "jpg";
       const filePath = `${user.id}/avatar.${fileExt}`;
 
-      // Delete old avatar if exists
       if (avatarUrl) {
         const oldPath = avatarUrl.split("/").slice(-2).join("/");
         await supabase.storage.from("avatars").remove([oldPath]);
@@ -153,7 +172,6 @@ export default function DashboardPage() {
       newAvatarUrl = publicUrl;
     }
 
-    // Update profile row
     const { error: updateError } = await supabase
       .from("profiles")
       .update({
@@ -182,6 +200,30 @@ export default function DashboardPage() {
     setSaving(false);
   }
 
+  // Stripe onboarding
+  async function handleStripeOnboard() {
+    setStripeOnboarding(true);
+    setStripeError(null);
+
+    try {
+      const res = await fetch("/api/stripe/onboard", {
+        method: "POST",
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setStripeError(data.error ?? "Failed to start Stripe onboarding.");
+        setStripeOnboarding(false);
+        return;
+      }
+
+      window.location.href = data.url;
+    } catch {
+      setStripeError("Network error. Please try again.");
+      setStripeOnboarding(false);
+    }
+  }
+
   // Sign out
   async function handleSignOut() {
     await supabase.auth.signOut();
@@ -189,7 +231,6 @@ export default function DashboardPage() {
     router.refresh();
   }
 
-  // Auth loading state
   if (sessionLoading || loading) {
     return (
       <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
@@ -200,7 +241,6 @@ export default function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-      {/* Page Header */}
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
@@ -219,7 +259,19 @@ export default function DashboardPage() {
         </button>
       </div>
 
-      {/* Tabs */}
+      {stripeStatus === "success" && (
+        <div className="mb-6 flex items-center gap-2 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">
+          <CheckCircle className="h-4 w-4" />
+          Stripe account connected successfully! You can now receive payouts.
+        </div>
+      )}
+      {stripeStatus === "refresh" && (
+        <div className="mb-6 flex items-center gap-2 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-700">
+          <AlertCircle className="h-4 w-4" />
+          Onboarding was interrupted. Please connect your Stripe account below.
+        </div>
+      )}
+
       <div className="mb-8 border-b border-gray-200">
         <nav className="-mb-px flex gap-6">
           {tabs.map((tab) => {
@@ -243,13 +295,10 @@ export default function DashboardPage() {
         </nav>
       </div>
 
-      {/* Tab Content */}
       {activeTab === "bookings" && (
         <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
           <Calendar className="mx-auto h-12 w-12 text-gray-300" />
-          <h3 className="mt-4 text-lg font-semibold text-gray-900">
-            No bookings yet
-          </h3>
+          <h3 className="mt-4 text-lg font-semibold text-gray-900">No bookings yet</h3>
           <p className="mt-2 text-sm text-gray-500">
             When you book a parking spot, it will appear here.
           </p>
@@ -259,9 +308,7 @@ export default function DashboardPage() {
       {activeTab === "listings" && (
         <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
           <List className="mx-auto h-12 w-12 text-gray-300" />
-          <h3 className="mt-4 text-lg font-semibold text-gray-900">
-            No listings yet
-          </h3>
+          <h3 className="mt-4 text-lg font-semibold text-gray-900">No listings yet</h3>
           <p className="mt-2 text-sm text-gray-500">
             List a parking space to start earning.
           </p>
@@ -269,169 +316,160 @@ export default function DashboardPage() {
       )}
 
       {activeTab === "profile" && (
-        <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
-          <form onSubmit={handleSave} className="space-y-8">
-            {/* Avatar */}
-            <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
-              <div className="relative">
-                <div className="h-24 w-24 overflow-hidden rounded-full border-2 border-gray-200 bg-gray-100">
-                  {(avatarPreview || avatarUrl) && (
-                    <Image
-                      src={avatarPreview ?? avatarUrl!}
-                      alt="Profile avatar"
-                      width={96}
-                      height={96}
-                      className="h-full w-full object-cover"
-                    />
-                  )}
-                  {!avatarPreview && !avatarUrl && (
-                    <div className="flex h-full w-full items-center justify-center">
-                      <User className="h-10 w-10 text-gray-400" />
-                    </div>
-                  )}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-parkga-600 text-white shadow-sm transition-colors hover:bg-parkga-700"
-                  aria-label="Change avatar"
-                >
-                  <Camera className="h-4 w-4" />
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/gif,image/webp"
-                  className="hidden"
-                  onChange={handleAvatarSelect}
-                />
+        <div className="space-y-6">
+          {/* Stripe Connect Section */}
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100">
+                <CreditCard className="h-5 w-5 text-purple-600" />
               </div>
-              <div className="text-center sm:text-left">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Profile Photo
+              <div className="flex-1">
+                <h3 className="text-sm font-semibold text-gray-900">
+                  Stripe Connect — Receive Payouts
                 </h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  JPEG, PNG, GIF, or WebP. Max 2MB.
+                <p className="mt-0.5 text-xs text-gray-500">
+                  {profile?.stripe_account_id
+                    ? "Your Stripe account is linked. You can receive payouts for bookings."
+                    : "Link your Stripe account to receive payouts for your parking listings."}
                 </p>
-                {avatarFile && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAvatarFile(null);
-                      setAvatarPreview(null);
-                    }}
-                    className="mt-2 text-sm font-medium text-red-600 hover:text-red-700"
-                  >
-                    Remove
-                  </button>
-                )}
               </div>
-            </div>
-
-            {/* Success / Error messages */}
-            {saveSuccess && (
-              <div className="rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">
-                Profile updated successfully.
-              </div>
-            )}
-            {saveError && (
-              <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
-                {saveError}
-              </div>
-            )}
-
-            {/* Name */}
-            <div>
-              <label
-                htmlFor="profile-name"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Full name
-              </label>
-              <input
-                id="profile-name"
-                type="text"
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="mt-1.5 block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 transition-colors focus:border-parkga-500 focus:outline-none focus:ring-2 focus:ring-parkga-500/20"
-              />
-            </div>
-
-            {/* Email (read-only) */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Email
-              </label>
-              <input
-                type="email"
-                value={profile?.id ? "" : ""}
-                disabled
-                className="mt-1.5 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 text-gray-500"
-                placeholder="Email linked to your account"
-              />
-              <p className="mt-1 text-xs text-gray-400">
-                Email is managed through your authentication provider.
-              </p>
-            </div>
-
-            {/* Phone */}
-            <div>
-              <label
-                htmlFor="profile-phone"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Phone number
-              </label>
-              <input
-                id="profile-phone"
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="+1 (555) 123-4567"
-                className="mt-1.5 block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 transition-colors focus:border-parkga-500 focus:outline-none focus:ring-2 focus:ring-parkga-500/20"
-              />
-            </div>
-
-            {/* Role (read-only) */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Account type
-              </label>
-              <div className="mt-1.5">
-                <span className="inline-flex items-center rounded-full bg-parkga-100 px-3 py-1 text-sm font-medium text-parkga-700">
-                  {profile?.role === "host"
-                    ? "Host"
-                    : profile?.role === "admin"
-                      ? "Admin"
-                      : "Guest"}
-                </span>
-              </div>
-            </div>
-
-            {/* Save Button */}
-            <div className="flex justify-end border-t border-gray-100 pt-6">
               <button
-                type="submit"
-                disabled={saving}
-                className="inline-flex items-center gap-2 rounded-lg bg-parkga-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-parkga-700 disabled:cursor-not-allowed disabled:opacity-50"
+                type="button"
+                onClick={handleStripeOnboard}
+                disabled={stripeOnboarding}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-purple-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {saving ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
+                {stripeOnboarding ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 ) : (
-                  <>
-                    <Save className="h-4 w-4" />
-                    Save changes
-                  </>
+                  <ExternalLink className="h-3.5 w-3.5" />
                 )}
+                {profile?.stripe_account_id ? "Manage Payouts" : "Connect with Stripe"}
               </button>
             </div>
-          </form>
+            {stripeError && (
+              <p className="mt-3 flex items-center gap-1 text-xs text-red-600">
+                <AlertCircle className="h-3 w-3" />
+                {stripeError}
+              </p>
+            )}
+            {profile?.stripe_account_id && (
+              <p className="mt-2 text-[10px] text-gray-400">Account: {profile.stripe_account_id}</p>
+            )}
+          </div>
+
+          {/* Profile Form */}
+          <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
+            <form onSubmit={handleSave} className="space-y-8">
+              <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
+                <div className="relative">
+                  <div className="h-24 w-24 overflow-hidden rounded-full border-2 border-gray-200 bg-gray-100">
+                    {(avatarPreview || avatarUrl) && (
+                      <Image
+                        src={avatarPreview ?? avatarUrl!}
+                        alt="Profile avatar"
+                        width={96}
+                        height={96}
+                        className="h-full w-full object-cover"
+                      />
+                    )}
+                    {!avatarPreview && !avatarUrl && (
+                      <div className="flex h-full w-full items-center justify-center">
+                        <User className="h-10 w-10 text-gray-400" />
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-parkga-600 text-white shadow-sm transition-colors hover:bg-parkga-700"
+                    aria-label="Change avatar"
+                  >
+                    <Camera className="h-4 w-4" />
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/gif,image/webp"
+                    className="hidden"
+                    onChange={handleAvatarSelect}
+                  />
+                </div>
+                <div className="text-center sm:text-left">
+                  <h3 className="text-lg font-semibold text-gray-900">Profile Photo</h3>
+                  <p className="mt-1 text-sm text-gray-500">JPEG, PNG, GIF, or WebP. Max 2MB.</p>
+                  {avatarFile && (
+                    <button
+                      type="button"
+                      onClick={() => { setAvatarFile(null); setAvatarPreview(null); }}
+                      className="mt-2 text-sm font-medium text-red-600 hover:text-red-700"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {saveSuccess && (
+                <div className="rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">Profile updated successfully.</div>
+              )}
+              {saveError && (
+                <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{saveError}</div>
+              )}
+
+              <div>
+                <label htmlFor="profile-name" className="block text-sm font-medium text-gray-700">Full name</label>
+                <input id="profile-name" type="text" required value={name} onChange={(e) => setName(e.target.value)}
+                  className="mt-1.5 block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 transition-colors focus:border-parkga-500 focus:outline-none focus:ring-2 focus:ring-parkga-500/20" />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Email</label>
+                <input type="email" disabled
+                  className="mt-1.5 block w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 text-gray-500"
+                  placeholder="Email linked to your account" />
+                <p className="mt-1 text-xs text-gray-400">Email is managed through your authentication provider.</p>
+              </div>
+
+              <div>
+                <label htmlFor="profile-phone" className="block text-sm font-medium text-gray-700">Phone number</label>
+                <input id="profile-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+1 (555) 123-4567"
+                  className="mt-1.5 block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 transition-colors focus:border-parkga-500 focus:outline-none focus:ring-2 focus:ring-parkga-500/20" />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Account type</label>
+                <div className="mt-1.5">
+                  <span className="inline-flex items-center rounded-full bg-parkga-100 px-3 py-1 text-sm font-medium text-parkga-700">
+                    {profile?.role === "host" ? "Host" : profile?.role === "admin" ? "Admin" : "Guest"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex justify-end border-t border-gray-100 pt-6">
+                <button type="submit" disabled={saving}
+                  className="inline-flex items-center gap-2 rounded-lg bg-parkga-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-parkga-700 disabled:cursor-not-allowed disabled:opacity-50">
+                  {saving ? <><Loader2 className="h-4 w-4 animate-spin" /> Saving...</> : <><Save className="h-4 w-4" /> Save changes</>}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
+  );
+}
+
+// Main export wraps the inner component in a Suspense boundary for useSearchParams
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-parkga-600" />
+      </div>
+    }>
+      <DashboardInner />
+    </Suspense>
   );
 }
