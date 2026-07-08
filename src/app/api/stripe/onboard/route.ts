@@ -2,21 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@/lib/supabase/server";
 
-// Initialize Stripe with the secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "", {
   apiVersion: "2026-06-24.dahlia",
 });
 
-/**
- * POST /api/stripe/onboard
- *
- * Creates or retrieves a Stripe Express connected account for the authenticated
- * user, generates an onboarding link, and returns it so the client can redirect
- * the user to Stripe's hosted onboarding flow.
- */
 export async function POST(_req: NextRequest) {
   try {
-    // 1) Verify the user is authenticated
     const supabase = await createClient();
     const {
       data: { user },
@@ -30,7 +21,6 @@ export async function POST(_req: NextRequest) {
       );
     }
 
-    // 2) Fetch the user's profile
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("id, role, stripe_account_id")
@@ -46,7 +36,6 @@ export async function POST(_req: NextRequest) {
 
     let accountId = profile.stripe_account_id;
 
-    // 3) Create a Stripe Express account if one doesn't exist
     if (!accountId) {
       const account = await stripe.accounts.create({
         type: "express",
@@ -57,14 +46,13 @@ export async function POST(_req: NextRequest) {
           transfers: { requested: true },
         },
         business_profile: {
-          mcc: "7523", // Parking lots, garages
+          mcc: "7523",
           url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://parkga.com",
         },
       });
 
       accountId = account.id;
 
-      // Save the Stripe account ID to the user's profile
       const { error: updateError } = await supabase
         .from("profiles")
         .update({ stripe_account_id: accountId })
@@ -72,12 +60,13 @@ export async function POST(_req: NextRequest) {
 
       if (updateError) {
         console.error("Failed to save stripe_account_id:", updateError);
-        // Non-fatal — the account was created on Stripe's side
       }
     }
 
-    // 4) Generate an Account Link for onboarding
-    const origin = _req.headers.get("origin") ?? process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+    const origin =
+      _req.headers.get("origin") ??
+      process.env.NEXT_PUBLIC_SITE_URL ??
+      "http://localhost:3000";
 
     const accountLink = await stripe.accountLinks.create({
       account: accountId,
@@ -86,7 +75,6 @@ export async function POST(_req: NextRequest) {
       type: "account_onboarding",
     });
 
-    // 5) Return the onboarding URL
     return NextResponse.json({
       url: accountLink.url,
       account_id: accountId,
@@ -95,6 +83,21 @@ export async function POST(_req: NextRequest) {
     console.error("Stripe onboard error:", err);
     const message =
       err instanceof Error ? err.message : "An unexpected error occurred.";
+
+    if (
+      message.includes("sign up for Connect") ||
+      message.includes("must sign up for Connect")
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Stripe Connect is not yet activated for this account. Please visit https://dashboard.stripe.com/connect to activate it, then try again.",
+          connect_url: "https://dashboard.stripe.com/connect",
+        },
+        { status: 400 },
+      );
+    }
+
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
