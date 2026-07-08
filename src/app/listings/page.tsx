@@ -15,6 +15,9 @@ import {
   ChevronUp,
   Search,
   X,
+  Calendar,
+  CalendarClock,
+  AlertCircle,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import "mapbox-gl/dist/mapbox-gl.css";
@@ -207,6 +210,15 @@ export default function ListingsPage() {
   const [mapLoaded, setMapLoaded] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Availability filter state
+  const [startDate, setStartDate] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [endTime, setEndTime] = useState("");
+  const [filterActive, setFilterActive] = useState(false);
+  const [checkingAvail, setCheckingAvail] = useState(false);
+  const [availError, setAvailError] = useState<string | null>(null);
+
   // ── Fetch spots on mount ─────────────────────────────────────────
   useEffect(() => {
     async function fetchSpots() {
@@ -244,6 +256,60 @@ export default function ListingsPage() {
 
     fetchSpots();
   }, [supabase]);
+
+  // ── Check availability via RPC ──────────────────────────────────
+  async function checkAvailability() {
+    setAvailError(null);
+
+    if (!startDate || !endDate) {
+      setAvailError("Please select both start and end dates.");
+      return;
+    }
+
+    const p_start = `${startDate}T${startTime || "00:00"}:00Z`;
+    const p_end = `${endDate}T${endTime || "23:59"}:00Z`;
+
+    if (new Date(p_start) >= new Date(p_end)) {
+      setAvailError("End time must be after start time.");
+      return;
+    }
+
+    setCheckingAvail(true);
+
+    const { data, error } = await supabase.rpc("get_available_spots", {
+      p_start_time: p_start,
+      p_end_time: p_end,
+    });
+
+    if (error) {
+      setAvailError(error.message);
+      setCheckingAvail(false);
+      return;
+    }
+
+    setSpots(data ?? []);
+    setFilterActive(true);
+    setCheckingAvail(false);
+  }
+
+  function clearAvailabilityFilter() {
+    setStartDate("");
+    setStartTime("");
+    setEndDate("");
+    setEndTime("");
+    setFilterActive(false);
+    setAvailError(null);
+    setLoading(true);
+    // Re-fetch all spots
+    supabase
+      .from("spots")
+      .select("*")
+      .order("price_per_hour", { ascending: true })
+      .then(({ data }) => {
+        setSpots(data ?? []);
+        setLoading(false);
+      });
+  }
 
   // ── Filter / search ───────────────────────────────────────────────
   const filteredSpots = useMemo(() => {
@@ -312,6 +378,82 @@ export default function ListingsPage() {
             {filteredSpots.length} spot{filteredSpots.length !== 1 ? "s" : ""}{" "}
             found near Truist Park
           </p>
+        </div>
+
+        {/* Availability filter */}
+        <div className="border-b border-gray-100 px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-gray-700">
+              <CalendarClock className="h-3.5 w-3.5" />
+              Check availability
+            </div>
+            {filterActive && (
+              <button
+                type="button"
+                onClick={clearAvailabilityFilter}
+                className="text-[10px] font-medium text-red-600 hover:text-red-700"
+              >
+                Clear filter
+              </button>
+            )}
+          </div>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-[10px] text-gray-500">From</label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="mt-0.5 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-xs text-gray-900 focus:border-parkga-500 focus:outline-none focus:ring-1 focus:ring-parkga-500/20"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] text-gray-500">Time</label>
+              <input
+                type="time"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+                className="mt-0.5 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-xs text-gray-900 focus:border-parkga-500 focus:outline-none focus:ring-1 focus:ring-parkga-500/20"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] text-gray-500">To</label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="mt-0.5 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-xs text-gray-900 focus:border-parkga-500 focus:outline-none focus:ring-1 focus:ring-parkga-500/20"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] text-gray-500">Time</label>
+              <input
+                type="time"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+                className="mt-0.5 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-xs text-gray-900 focus:border-parkga-500 focus:outline-none focus:ring-1 focus:ring-parkga-500/20"
+              />
+            </div>
+          </div>
+          {availError && (
+            <p className="mt-1.5 flex items-center gap-1 text-[10px] text-red-600">
+              <AlertCircle className="h-3 w-3" />
+              {availError}
+            </p>
+          )}
+          <button
+            type="button"
+            onClick={checkAvailability}
+            disabled={checkingAvail}
+            className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg bg-parkga-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-parkga-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {checkingAvail ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <Calendar className="h-3 w-3" />
+            )}
+            {filterActive ? "Re-check availability" : "Check availability"}
+          </button>
         </div>
 
         {/* Scrollable list */}
