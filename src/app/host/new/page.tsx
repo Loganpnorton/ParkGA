@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useRef, FormEvent } from "react";
+import { useState, useRef, FormEvent, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import {
   ArrowLeft,
   ArrowRight,
@@ -16,8 +17,23 @@ import {
   Home,
   Sparkles,
   Camera,
+  Search,
+  Navigation,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import "mapbox-gl/dist/mapbox-gl.css";
+
+// Dynamically import Map + Marker to avoid SSR issues with WebGL
+const Map = dynamic(
+  () => import("react-map-gl/mapbox").then((mod) => mod.default),
+  { ssr: false },
+);
+const Marker = dynamic(
+  () => import("react-map-gl/mapbox").then((mod) => mod.Marker),
+  { ssr: false },
+);
+
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
 
 // ─── Step configuration ────────────────────────────────────────────────
 const STEPS = [
@@ -94,7 +110,7 @@ function validateStep(step: StepId, data: FormData): string | null {
       return null;
     case "features":
     case "photos":
-      return null; // optional
+      return null;
     default:
       return null;
   }
@@ -105,6 +121,7 @@ export default function NewListingPage() {
   const router = useRouter();
   const supabase = createClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const addressInputRef = useRef<HTMLInputElement>(null);
 
   const [currentStep, setCurrentStep] = useState<StepId>("basic");
   const stepIndex = STEPS.findIndex((s) => s.id === currentStep);
@@ -114,6 +131,14 @@ export default function NewListingPage() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  // Geocoding state
+  const [geocoding, setGeocoding] = useState(false);
+  const [geocodeSuggestions, setGeocodeSuggestions] = useState<
+    { place_name: string; center: [number, number] }[]
+  >([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [mapLoaded, setMapLoaded] = useState(false);
 
   // ── Helpers ──────────────────────────────────────────────────────
   function updateField<K extends keyof FormData>(key: K, value: FormData[K]) {
@@ -153,11 +178,62 @@ export default function NewListingPage() {
     }
   }
 
+  // ── Geocoding ─────────────────────────────────────────────────────
+  async function handleGeocode(query: string) {
+    if (!query.trim() || !MAPBOX_TOKEN) return;
+
+    setGeocoding(true);
+    try {
+      const res = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?` +
+          new URLSearchParams({
+            access_token: MAPBOX_TOKEN,
+            limit: "5",
+            country: "US",
+            types: "address,place,locality,neighborhood,district,region,postcode",
+          }),
+      );
+      const data = await res.json();
+
+      if (data.features?.length > 0) {
+        setGeocodeSuggestions(
+          data.features.map((f: { place_name: string; center: [number, number] }) => ({
+            place_name: f.place_name,
+            center: f.center,
+          })),
+        );
+        setShowSuggestions(true);
+      } else {
+        setError("No results found for this address.");
+      }
+    } catch {
+      setError("Failed to search address. Please try again.");
+    } finally {
+      setGeocoding(false);
+    }
+  }
+
+  function selectSuggestion(suggestion: { place_name: string; center: [number, number] }) {
+    setForm((prev) => ({
+      ...prev,
+      address: suggestion.place_name,
+      lng: suggestion.center[0].toFixed(6),
+      lat: suggestion.center[1].toFixed(6),
+    }));
+    setShowSuggestions(false);
+    setGeocodeSuggestions([]);
+    setError(null);
+  }
+
+  function clearCoordinates() {
+    setForm((prev) => ({ ...prev, lat: "", lng: "" }));
+  }
+
   // ── File handling ─────────────────────────────────────────────────
   function handleFiles(newFiles: FileList | null) {
     if (!newFiles) return;
     const allowed = ["image/jpeg", "image/png", "image/webp"];
-    const maxSize = 5 * 1024 * 1024; // 5 MB
+    const maxSize = 5 * 1024 * 1024;
 
     const valid: File[] = [];
     const blobs: string[] = [];
@@ -165,7 +241,7 @@ export default function NewListingPage() {
     for (const file of Array.from(newFiles)) {
       if (!allowed.includes(file.type)) continue;
       if (file.size > maxSize) continue;
-      if (form.files.length + valid.length >= 6) break; // max 6 images
+      if (form.files.length + valid.length >= 6) break;
       valid.push(file);
       blobs.push(URL.createObjectURL(file));
     }
@@ -187,7 +263,6 @@ export default function NewListingPage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
 
-    // Validate all steps
     for (const step of STEPS) {
       const err = validateStep(step.id, form);
       if (err) {
@@ -209,7 +284,6 @@ export default function NewListingPage() {
       return;
     }
 
-    // 1) Upload images to Supabase Storage
     const imageUrls: string[] = [];
     for (let i = 0; i < form.files.length; i++) {
       const file = form.files[i];
@@ -232,13 +306,11 @@ export default function NewListingPage() {
       imageUrls.push(publicUrl);
     }
 
-    // 2) Build features JSON (only truthy keys)
     const featuresJson: Record<string, boolean> = {};
     for (const [key, val] of Object.entries(form.features)) {
       if (val) featuresJson[key] = true;
     }
 
-    // 3) Insert spot row
     const { error: insertErr } = await supabase.from("spots").insert({
       host_id: user.id,
       title: form.title.trim(),
@@ -262,8 +334,15 @@ export default function NewListingPage() {
     setSubmitting(false);
   }
 
-  // ── Progress percentage ───────────────────────────────────────────
+  // ── Progress ──────────────────────────────────────────────────────
   const progressPct = Math.round(((stepIndex + 1) / STEPS.length) * 100);
+
+  // Map center for preview
+  const mapCenter =
+    form.lat && form.lng
+      ? { latitude: parseFloat(form.lat), longitude: parseFloat(form.lng), zoom: 15 }
+      : undefined;
+  const hasCoordinates = Boolean(form.lat && form.lng);
 
   // ── Success state ─────────────────────────────────────────────────
   if (success) {
@@ -319,9 +398,7 @@ export default function NewListingPage() {
       {/* Progress bar */}
       <div className="mb-8">
         <div className="flex items-center justify-between text-sm text-gray-500">
-          <span>
-            Step {stepIndex + 1} of {STEPS.length}
-          </span>
+          <span>Step {stepIndex + 1} of {STEPS.length}</span>
           <span>{progressPct}%</span>
         </div>
         <div className="mt-2 h-2 w-full rounded-full bg-gray-200">
@@ -336,7 +413,6 @@ export default function NewListingPage() {
       <nav className="mb-8 hidden sm:block">
         <ol className="flex items-center">
           {STEPS.map((step, idx) => {
-            const Icon = step.icon;
             const isActive = currentStep === step.id;
             const isPast = stepIndex > idx;
             return (
@@ -429,61 +505,156 @@ export default function NewListingPage() {
             </div>
           )}
 
-          {/* ── Step 2: Address ────────────────────────────────────── */}
+          {/* ── Step 2: Address with Geocoding & Map ───────────────── */}
           {currentStep === "address" && (
             <div className="space-y-5">
               <div>
                 <h2 className="text-xl font-semibold text-gray-900">Address</h2>
-                <p className="mt-1 text-sm text-gray-500">Where is your parking spot located?</p>
+                <p className="mt-1 text-sm text-gray-500">
+                  Enter your address, then click <strong>Search</strong> to find it on the map.
+                </p>
               </div>
-              <div>
-                <label htmlFor="address" className="block text-sm font-medium text-gray-700">
+
+              {/* Address search input */}
+              <div className="relative">
+                <label htmlFor="address-search" className="block text-sm font-medium text-gray-700">
                   Street Address
                 </label>
-                <input
-                  id="address"
-                  type="text"
-                  required
-                  value={form.address}
-                  onChange={(e) => updateField("address", e.target.value)}
-                  placeholder="123 Main St, Atlanta, GA 30303"
-                  className="mt-1.5 block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 placeholder-gray-400 transition-colors focus:border-parkga-500 focus:outline-none focus:ring-2 focus:ring-parkga-500/20"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="lat" className="block text-sm font-medium text-gray-700">
-                    Latitude
-                  </label>
-                  <input
-                    id="lat"
-                    type="number"
-                    step="any"
-                    required
-                    value={form.lat}
-                    onChange={(e) => updateField("lat", e.target.value)}
-                    placeholder="33.7490"
-                    className="mt-1.5 block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 placeholder-gray-400 transition-colors focus:border-parkga-500 focus:outline-none focus:ring-2 focus:ring-parkga-500/20"
-                  />
+                <div className="mt-1.5 flex gap-2">
+                  <div className="relative flex-1">
+                    <input
+                      ref={addressInputRef}
+                      id="address-search"
+                      type="text"
+                      required
+                      value={form.address}
+                      onChange={(e) => {
+                        updateField("address", e.target.value);
+                        if (!e.target.value) clearCoordinates();
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleGeocode(form.address);
+                        }
+                      }}
+                      placeholder="123 Main St, Atlanta, GA 30303"
+                      className="block w-full rounded-lg border border-gray-300 px-4 py-2.5 pr-10 text-gray-900 placeholder-gray-400 transition-colors focus:border-parkga-500 focus:outline-none focus:ring-2 focus:ring-parkga-500/20"
+                    />
+                    {form.address && !showSuggestions && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setForm((prev) => ({ ...prev, address: "" }));
+                          clearCoordinates();
+                          addressInputRef.current?.focus();
+                        }}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleGeocode(form.address)}
+                    disabled={geocoding || !form.address.trim()}
+                    className="inline-flex items-center gap-2 rounded-lg bg-parkga-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-parkga-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {geocoding ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Search className="h-4 w-4" />
+                    )}
+                    Search
+                  </button>
                 </div>
-                <div>
-                  <label htmlFor="lng" className="block text-sm font-medium text-gray-700">
-                    Longitude
-                  </label>
-                  <input
-                    id="lng"
-                    type="number"
-                    step="any"
-                    required
-                    value={form.lng}
-                    onChange={(e) => updateField("lng", e.target.value)}
-                    placeholder="-84.3880"
-                    className="mt-1.5 block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 placeholder-gray-400 transition-colors focus:border-parkga-500 focus:outline-none focus:ring-2 focus:ring-parkga-500/20"
-                  />
-                </div>
+
+                {/* Geocoding suggestions dropdown */}
+                {showSuggestions && geocodeSuggestions.length > 0 && (
+                  <div className="absolute z-10 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg">
+                    {geocodeSuggestions.map((s, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => selectSuggestion(s)}
+                        className="flex w-full items-start gap-3 px-4 py-3 text-left text-sm transition-colors hover:bg-parkga-50 first:rounded-t-lg last:rounded-b-lg"
+                      >
+                        <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
+                        <span className="text-gray-700">{s.place_name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
+
+              {/* Coordinates row (shown after geocode) */}
+              {hasCoordinates && (
+                <div className="rounded-lg border border-parkga-200 bg-parkga-50 p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm text-parkga-700">
+                      <Navigation className="h-4 w-4" />
+                      <span className="font-medium">Location confirmed</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={clearCoordinates}
+                      className="text-xs font-medium text-red-600 hover:text-red-700"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  <div className="mt-2 grid grid-cols-2 gap-3">
+                    <div>
+                      <span className="text-xs text-parkga-600">Latitude</span>
+                      <p className="text-sm font-medium text-gray-900">{form.lat}</p>
+                    </div>
+                    <div>
+                      <span className="text-xs text-parkga-600">Longitude</span>
+                      <p className="text-sm font-medium text-gray-900">{form.lng}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Map preview */}
+              {hasCoordinates && MAPBOX_TOKEN && mapCenter && (
+                <div className="overflow-hidden rounded-xl border border-gray-200">
+                  <div className="h-[250px] w-full sm:h-[300px]">
+                    <Map
+                      mapboxAccessToken={MAPBOX_TOKEN}
+                      initialViewState={mapCenter}
+                      style={{ width: "100%", height: "100%" }}
+                      mapStyle="mapbox://styles/mapbox/streets-v12"
+                      onLoad={() => setMapLoaded(true)}
+                      interactive={true}
+                      attributionControl={false}
+                    >
+                      {mapLoaded && (
+                        <Marker
+                          longitude={parseFloat(form.lng)}
+                          latitude={parseFloat(form.lat)}
+                          anchor="bottom"
+                        >
+                          <div className="relative">
+                            <MapPin className="h-8 w-8 text-parkga-600 drop-shadow-md" />
+                          </div>
+                        </Marker>
+                      )}
+                    </Map>
+                  </div>
+                </div>
+              )}
+
+              {/* Mapbox attribution note */}
               <p className="text-xs text-gray-400">
-                You can find coordinates using Google Maps (right-click on a location).
+                &copy; Mapbox &copy; OpenStreetMap contributors.{" "}
+                {!MAPBOX_TOKEN ||
+                  (MAPBOX_TOKEN === "your_mapbox_token_here" && (
+                    <span className="text-amber-600">
+                      Set <code>NEXT_PUBLIC_MAPBOX_TOKEN</code> in your .env.local file to enable the map.
+                    </span>
+                  ))}
               </p>
             </div>
           )}
@@ -586,8 +757,6 @@ export default function NewListingPage() {
                   Upload up to 6 images of your parking space (JPEG, PNG, or WebP, max 5MB each).
                 </p>
               </div>
-
-              {/* Drop zone */}
               <div
                 onClick={() => fileInputRef.current?.click()}
                 onDragOver={(e) => e.preventDefault()}
@@ -613,8 +782,6 @@ export default function NewListingPage() {
                   onChange={(e) => handleFiles(e.target.files)}
                 />
               </div>
-
-              {/* Preview grid */}
               {previews.length > 0 && (
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                   {previews.map((src, idx) => (

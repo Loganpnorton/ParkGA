@@ -9,12 +9,16 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@mapbox/mapbox-sdk": "^0.16.2",
+    "@supabase/ssr": "^0.6.0",
+    "@supabase/supabase-js": "^2.49.0",
+    "@types/mapbox-gl": "^3.4.1",
+    "lucide-react": "^0.474.0",
+    "mapbox-gl": "^3.25.0",
     "next": "^16.2.10",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "@supabase/ssr": "^0.6.0",
-    "@supabase/supabase-js": "^2.49.0",
-    "lucide-react": "^0.474.0"
+    "react-map-gl": "^8.1.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.0",
