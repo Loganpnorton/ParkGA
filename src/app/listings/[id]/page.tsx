@@ -214,7 +214,7 @@ export default function SpotDetailPage() {
     return Math.round(((end.getTime() - start.getTime()) / (1000 * 60 * 60)) * 10) / 10;
   }, [bookingMode, startDate, startTime, endDate, endTime]);
 
-  // ── Book handler ─────────────────────────────────────────────────
+  // ── Book handler (Stripe Checkout) ──────────────────────────────
   async function handleBook() {
     setBookError(null);
 
@@ -260,24 +260,32 @@ export default function SpotDetailPage() {
       return;
     }
 
-    // Insert booking
-    const { error: bookErr } = await supabase.from("bookings").insert({
-      spot_id: id,
-      guest_id: user.id,
-      start_time: p_start,
-      end_time: p_end,
-      total_price: totalPrice,
-      status: "pending",
-    });
+    // Create Stripe Checkout Session
+    try {
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          spot_id: id,
+          start_time: p_start,
+          end_time: p_end,
+        }),
+      });
 
-    if (bookErr) {
-      setBookError(bookErr.message);
+      const data = await res.json();
+
+      if (!res.ok) {
+        setBookError(data.error ?? "Failed to create checkout session.");
+        setBooking(false);
+        return;
+      }
+
+      // Redirect to Stripe Checkout
+      window.location.href = data.url;
+    } catch {
+      setBookError("Network error. Please try again.");
       setBooking(false);
-      return;
     }
-
-    setBookSuccess(true);
-    setBooking(false);
   }
 
   // ── Loading ──────────────────────────────────────────────────────
