@@ -533,73 +533,88 @@ export default function HomePage() {
       {/* ── How It Works Section (sticky-scroll) ──────────────────────────── */}
       <HowItWorksSection />
 
-      {/* ── Host Spotlight Section ──────────────────────────────────────── */}
-      <section className="bg-slate-900 py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col items-center gap-12 md:flex-row">
-            {/* Left — Image */}
-            <div className="w-full md:w-1/2">
-              <div
-                className="aspect-[4/3] w-full rounded-2xl bg-cover bg-center shadow-xl"
-                style={{
-                  backgroundImage:
-                    "url('https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&q=80')",
-                }}
-              />
-            </div>
+      {/* ── Diffused transition: white → green-900 ───────────────────────── */}
+      <div className="h-24 bg-gradient-to-b from-white via-white/60 to-green-900" />
 
-            {/* Right — Content */}
+      {/* ── Unified Host + CTA Block ─────────────────────────────────────── */}
+      <section className="bg-green-900">
+        <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+          <div className="flex flex-col items-center gap-12 md:flex-row md:gap-16">
+            {/* Left — Content */}
             <div className="w-full text-center md:w-1/2 md:text-left">
-              <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
+              <p className="text-sm font-semibold uppercase tracking-widest text-parkga-300">
+                Become a Host
+              </p>
+              <h2 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
                 Your Driveway.
                 <span className="block text-parkga-400">Their Parking Spot.</span>
               </h2>
-              <p className="mt-6 text-lg leading-8 text-slate-300">
+              <p className="mt-6 text-lg leading-8 text-green-100/80">
                 Unlike corporate garages, ParkGA is built by locals, for locals.
                 Turn your empty driveway into passive income during game days and
                 local events. We handle the payments, you keep the profits.
               </p>
+
+              {/* CTAs */}
               <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row md:justify-start">
                 <a
                   href="/host/new"
-                  className="inline-flex items-center gap-2 rounded-xl bg-parkga-600 px-8 py-4 text-base font-semibold text-white shadow-lg transition-all duration-300 hover:bg-parkga-500 hover:shadow-xl active:scale-95"
+                  className="inline-flex items-center gap-2 rounded-xl bg-parkga-500 px-8 py-4 text-base font-semibold text-white shadow-lg transition-all duration-300 hover:bg-parkga-400 hover:shadow-xl active:scale-95"
                 >
                   Start Earning Today
                   <span aria-hidden="true" className="text-lg">&rarr;</span>
                 </a>
                 <a
-                  href="/listings"
-                  className="inline-flex items-center gap-1 text-sm font-medium text-slate-400 transition-colors hover:text-white"
+                  href="/auth/signup"
+                  className="inline-flex items-center gap-2 rounded-xl border border-green-500/30 px-8 py-4 text-base font-semibold text-green-100 transition-all duration-300 hover:border-green-500/60 hover:bg-white/5"
                 >
-                  Browse parking spots
-                  <span aria-hidden="true">&rarr;</span>
+                  Create an Account
                 </a>
               </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {/* ── Final CTA Section ───────────────────────────────────────────── */}
-      <section className="bg-parkga-600 py-16">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-              Ready to Get Started?
-            </h2>
-            <p className="mt-4 text-lg text-parkga-100">
-              Join thousands of drivers and hosts across Georgia.
-            </p>
-            <div className="mt-8 flex items-center justify-center gap-4">
-              <a
-                href="/auth/signup"
-                className="rounded-lg bg-white px-6 py-3 text-base font-semibold text-parkga-600 transition-colors hover:bg-parkga-50"
-              >
-                Create an Account
-              </a>
+              {/* Trust markers */}
+              <div className="mt-10 flex flex-wrap items-center gap-8 text-sm text-green-200/60">
+                <span className="flex items-center gap-1.5">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Free to list
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Secure payouts
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  24/7 support
+                </span>
+              </div>
+            </div>
+
+            {/* Right — Image */}
+            <div className="w-full md:w-1/2">
+              <div className="overflow-hidden rounded-2xl shadow-2xl shadow-green-950/50">
+                <div
+                  className="aspect-[4/3] w-full bg-cover bg-center transition-transform duration-700 hover:scale-105"
+                  style={{
+                    backgroundImage:
+                      "url('https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&q=80')",
+                  }}
+                />
+              </div>
+              <p className="mt-3 text-center text-xs text-green-200/40 md:text-left">
+                A typical Atlanta driveway — ready to earn.
+              </p>
             </div>
           </div>
         </div>
+
+        {/* ── Bottom transition: green-900 → footer gray-50 ─────────────── */}
+        <div className="h-24 bg-gradient-to-b from-green-900 via-green-800/20 to-gray-50" />
       </section>
     </>
   );
