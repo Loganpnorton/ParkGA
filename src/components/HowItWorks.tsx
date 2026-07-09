@@ -134,10 +134,10 @@ export default function HowItWorks() {
           }}
         />
 
-        {/* ── Scroll Indicator (above everything, bottom of screen) ───── */}
+        {/* ── Scroll Indicator (fixed to viewport, bottom of screen) ──── */}
         <motion.div
-          className="absolute bottom-8 left-1/2 z-30 -translate-x-1/2 flex flex-col items-center gap-1"
-          style={{ opacity: scrollOpacity }}
+          className="fixed bottom-8 left-1/2 z-50 -translate-x-1/2 flex flex-col items-center gap-1"
+          style={{ opacity: scrollOpacity, pointerEvents: "none" }}
         >
           <span className="text-xs text-gray-400">Scroll</span>
           <svg
@@ -186,15 +186,16 @@ export default function HowItWorks() {
                 vectorEffect="non-scaling-stroke"
               />
 
-              {/* Animated green path — NO vectorEffect to avoid conflict
-                  with pathLength animation on stretched viewBox.
-                  CSS drop-shadow replaces SVG filter for clean rendering. */}
+              {/* Animated green path — vectorEffect prevents stroke warping
+                  on stretched viewBox. CSS drop-shadow for clean glow
+                  (no SVG filter to avoid render artifacts with pathLength). */}
               <motion.path
                 d={SVG_PATH}
                 stroke="#16a34a"
-                strokeWidth={3}
+                strokeWidth={2}
                 fill="none"
                 strokeLinecap="round"
+                vectorEffect="non-scaling-stroke"
                 style={{
                   pathLength: scrollYProgress,
                   filter: "drop-shadow(0 0 2px rgba(22, 163, 74, 0.5))",
