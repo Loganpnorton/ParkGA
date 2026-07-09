@@ -62,5 +62,14 @@ export async function sendEmail({
 
 /**
  * Default "from" address for transactional booking emails.
+ *
+ * ⚠️ Resend free/test tier REQUIREMENTS:
+ * - The `from` domain MUST be verified in your Resend dashboard.
+ * - Until you verify a domain, set RESEND_FROM to
+ *   "ParkGA <onboarding@resend.dev>" — this only delivers to the
+ *   email address you signed up to Resend with.
+ * - Once you verify a domain (e.g. parkga.com), set
+ *   RESEND_FROM="ParkGA <bookings@parkga.com>"
  */
-export const BOOKINGS_FROM = "ParkGA <bookings@parkga.com>";
+export const BOOKINGS_FROM =
+  process.env.RESEND_FROM ?? "ParkGA <onboarding@resend.dev>";
