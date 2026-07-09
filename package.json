@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@mapbox/mapbox-sdk": "^0.16.2",
+    "@stripe/react-stripe-js": "^6.7.0",
+    "@stripe/stripe-js": "^9.9.0",
     "@supabase/ssr": "^0.6.0",
     "@supabase/supabase-js": "^2.49.0",
     "@types/mapbox-gl": "^3.4.1",

@@ -214,7 +214,7 @@ export default function SpotDetailPage() {
     return Math.round(((end.getTime() - start.getTime()) / (1000 * 60 * 60)) * 10) / 10;
   }, [bookingMode, startDate, startTime, endDate, endTime]);
 
-  // ── Book handler (Stripe Checkout) ──────────────────────────────
+  // ── Book handler (create pending booking, redirect to checkout) ─
   async function handleBook() {
     setBookError(null);
 
@@ -260,28 +260,40 @@ export default function SpotDetailPage() {
       return;
     }
 
-    // Create Stripe Checkout Session
+    // Calculate total price for the booking
+    let totalPrice = 0;
+    if (bookingMode === "event" && spot?.price_per_event) {
+      totalPrice = spot.price_per_event;
+    } else if (spot?.price_per_hour) {
+      const hours =
+        (new Date(p_end).getTime() - new Date(p_start).getTime()) /
+        (1000 * 60 * 60);
+      totalPrice = Math.round(hours * spot.price_per_hour * 100) / 100;
+    }
+
+    // Insert pending booking into Supabase
     try {
-      const res = await fetch("/api/stripe/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const { data: booking, error: insertError } = await supabase
+        .from("bookings")
+        .insert({
           spot_id: id,
+          guest_id: user.id,
           start_time: p_start,
           end_time: p_end,
-        }),
-      });
+          total_price: totalPrice,
+          status: "pending",
+        })
+        .select("id")
+        .single();
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        setBookError(data.error ?? "Failed to create checkout session.");
+      if (insertError || !booking) {
+        setBookError(insertError?.message ?? "Failed to create booking.");
         setBooking(false);
         return;
       }
 
-      // Redirect to Stripe Checkout
-      window.location.href = data.url;
+      // Redirect to embedded checkout
+      router.push(`/checkout/${booking.id}`);
     } catch {
       setBookError("Network error. Please try again.");
       setBooking(false);

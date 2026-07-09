@@ -12,14 +12,14 @@ const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET ?? "";
 /**
  * POST /api/stripe/webhook
  *
- * Handles Stripe webhook events — specifically checkout.session.completed.
+ * Handles Stripe webhook events — specifically payment_intent.succeeded.
  *
  * Security:
  * - Verifies the Stripe-Signature header using the webhook secret
  * - Uses createAdminClient (SUPABASE_SERVICE_ROLE_KEY) to bypass RLS
  *
  * Idempotency:
- * - Queries by checkout_session_id; if already confirmed, returns 200
+ * - Queries by payment_intent_id; if already confirmed, returns 200
  */
 export async function POST(req: NextRequest) {
   try {
@@ -47,25 +47,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ── 3. Handle only checkout.session.completed ───────────────────
-    if (event.type !== "checkout.session.completed") {
+    // ── 3. Handle only payment_intent.succeeded ─────────────────────
+    if (event.type !== "payment_intent.succeeded") {
       return NextResponse.json({ received: true });
     }
 
-    const session = event.data.object as Stripe.Checkout.Session;
-    const sessionId = session.id;
-    const paymentIntentId = session.payment_intent?.toString() ?? null;
-    const metadata = session.metadata ?? {};
+    const paymentIntent = event.data.object as Stripe.PaymentIntent;
+    const paymentIntentId = paymentIntent.id;
+    const metadata = paymentIntent.metadata ?? {};
 
-    const spot_id = metadata.spot_id;
-    const guest_id = metadata.guest_id;
-    const start_time = metadata.start_time;
-    const end_time = metadata.end_time;
+    const booking_id = metadata.booking_id;
 
-    if (!spot_id || !guest_id || !start_time || !end_time) {
-      console.error("Webhook missing metadata:", metadata);
+    if (!booking_id) {
+      console.error("Webhook missing booking_id in metadata:", metadata);
       return NextResponse.json(
-        { error: "Missing required metadata" },
+        { error: "Missing booking_id in metadata" },
         { status: 400 },
       );
     }
@@ -77,7 +73,7 @@ export async function POST(req: NextRequest) {
     const { data: existing } = await supabase
       .from("bookings")
       .select("id, status")
-      .eq("checkout_session_id", sessionId)
+      .eq("payment_intent_id", paymentIntentId)
       .maybeSingle();
 
     if (existing && existing.status === "confirmed") {
@@ -88,36 +84,24 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // ── 6. Upsert booking: update status to confirmed ───────────────
-    // Include total_price from the session so the upsert also works
-    // when a prior insert was missed (e.g. RLS-blocked checkout).
-    const totalPriceCents = session.amount_total ?? 0;
+    // ── 6. Update booking: set status to confirmed ──────────────────
+    const totalPriceCents = paymentIntent.amount ?? 0;
     const totalPriceDollars = totalPriceCents / 100;
 
-    const { data: booking, error: upsertError } = await supabase
+    const { data: booking, error: updateError } = await supabase
       .from("bookings")
-      .upsert(
-        {
-          spot_id,
-          guest_id,
-          start_time,
-          end_time,
-          total_price: totalPriceDollars,
-          status: "confirmed",
-          payment_intent_id: paymentIntentId,
-          checkout_session_id: sessionId,
-          updated_at: new Date().toISOString(),
-        },
-        {
-          onConflict: "checkout_session_id",
-          ignoreDuplicates: false,
-        },
-      )
-      .select("id, total_price")
+      .update({
+        status: "confirmed",
+        total_price: totalPriceDollars,
+        payment_intent_id: paymentIntentId,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", booking_id)
+      .select("id, total_price, spot_id, guest_id, start_time, end_time")
       .single();
 
-    if (upsertError) {
-      console.error("Webhook upsert error:", upsertError);
+    if (updateError) {
+      console.error("Webhook update error:", updateError);
       return NextResponse.json(
         { error: "Failed to update booking" },
         { status: 500 },
@@ -125,18 +109,21 @@ export async function POST(req: NextRequest) {
     }
 
     console.log(
-      `✅ Booking confirmed: session=${sessionId}, booking=${booking?.id}, payment_intent=${paymentIntentId}`,
+      `✅ Booking confirmed: booking=${booking?.id}, payment_intent=${paymentIntentId}`,
     );
 
     // ── 7. Fire notifications ────────────────────────────────────────
-    await fireNotifications(supabase, {
-      spot_id,
-      guest_id,
-      start_time,
-      end_time,
-      totalPrice: Number(booking!.total_price),
-      sessionId,
-    });
+    if (booking) {
+      await fireNotifications(supabase, {
+        booking_id: booking.id,
+        spot_id: booking.spot_id,
+        guest_id: booking.guest_id,
+        start_time: booking.start_time,
+        end_time: booking.end_time,
+        totalPrice: Number(booking.total_price),
+        paymentIntentId,
+      });
+    }
 
     return NextResponse.json({
       received: true,
@@ -154,19 +141,20 @@ export async function POST(req: NextRequest) {
 // ── Fire notifications (non-blocking, best-effort) ─────────────────────
 
 interface NotifInput {
+  booking_id: string;
   spot_id: string;
   guest_id: string;
   start_time: string;
   end_time: string;
   totalPrice: number;
-  sessionId: string;
+  paymentIntentId: string;
 }
 
 async function fireNotifications(
   supabase: ReturnType<typeof createAdminClient>,
   input: NotifInput,
 ): Promise<void> {
-  const { spot_id, guest_id, start_time, end_time, totalPrice, sessionId } = input;
+  const { spot_id, guest_id, start_time, end_time, totalPrice, paymentIntentId } = input;
 
   try {
     // Fetch spot + guest profile + host profile in parallel
@@ -212,7 +200,7 @@ async function fireNotifications(
       startTime: start_time,
       endTime: end_time,
       totalPrice,
-      idempotencyKey: sessionId,
+      idempotencyKey: paymentIntentId,
     });
   } catch (err) {
     console.error("Notifications error (non-fatal):", err);
