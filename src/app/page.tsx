@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Search, Calendar, MapPin, Shield, DollarSign, Star, Loader2 } from "lucide-react";
+import { motion, useScroll, useTransform } from "framer-motion";
+import { Search, Calendar, MapPin, Shield, DollarSign, Star, Loader2, Car, CreditCard } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 /* ── Types ────────────────────────────────────────────────────────────── */
@@ -74,33 +75,6 @@ function useTypingEffect(
 }
 
 const CYCLING_WORDS = ["Braves Games.", "The BeltLine.", "UGA Tailgates.", "Georgia."];
-
-const features = [
-  {
-    icon: MapPin,
-    title: "Find Parking Anywhere",
-    description:
-      "Browse hundreds of verified parking spots near stadiums, airports, downtown areas, and more across Georgia.",
-  },
-  {
-    icon: Shield,
-    title: "Safe & Secure",
-    description:
-      "Every booking is protected. We verify hosts and provide secure payments so you can park with confidence.",
-  },
-  {
-    icon: DollarSign,
-    title: "Earn from Your Space",
-    description:
-      "Got an unused driveway, garage, or parking lot? List it on ParkGA and start earning passive income today.",
-  },
-  {
-    icon: Search,
-    title: "Easy Booking",
-    description:
-      "Search by location, date, and price. Book instantly with a few taps. No hassle, no hidden fees.",
-  },
-];
 
 /* ── Skeleton Card ─────────────────────────────────────────────────── */
 function SkeletonCard() {
@@ -279,6 +253,190 @@ function TrendingSpotsSection() {
   );
 }
 
+/* ── How It Works Section (Sticky Scroll) ─────────────────────────── */
+const HOW_IT_WORKS_STEPS = [
+  {
+    title: "Find a Spot",
+    description:
+      "Browse hundreds of verified parking spots near stadiums, airports, and event venues across Georgia. Filter by price, location, and date.",
+    icon: Search,
+    cardPosition: { left: "22%", top: "12%" },
+  },
+  {
+    title: "Book & Pay",
+    description:
+      "Reserve instantly with secure checkout. No hidden fees, no hassle. Your booking is protected from the moment you pay.",
+    icon: CreditCard,
+    cardPosition: { left: "12%", top: "42%" },
+  },
+  {
+    title: "Park & Go",
+    description:
+      "Get digital access instructions and park with confidence. We handle the verification so you can focus on the game, event, or wherever life takes you.",
+    icon: Car,
+    cardPosition: { left: "38%", top: "70%" },
+  },
+];
+
+/** Smooth SVG winding path connecting the 3 step nodes */
+const SVG_PATH =
+  "M 120,160 C 480,130 180,440 600,440 C 1020,440 720,750 1020,750";
+
+/* ── Individual step node (receives scrollYProgress as a prop) ────── */
+function StepNode({
+  step,
+  index,
+  scrollYProgress,
+}: {
+  step: (typeof HOW_IT_WORKS_STEPS)[number];
+  index: number;
+  scrollYProgress: import("framer-motion").MotionValue<number>;
+}) {
+  const Icon = step.icon;
+
+  // Map progress ranges per step: [fadeInStart, fullyVisibleStart]
+  const ranges = [
+    [0, 0.35],
+    [0.25, 0.65],
+    [0.55, 1],
+  ] as const;
+  const [fadeIn, full] = ranges[index];
+
+  const opacity = useTransform(scrollYProgress, (p: number) => {
+    if (p < fadeIn) return 0.35;
+    if (p > full) return 1;
+    return 0.35 + ((p - fadeIn) / (full - fadeIn)) * 0.65;
+  });
+
+  const isActive = useTransform(scrollYProgress, (p: number) => p >= fadeIn);
+
+  const dotBg = useTransform(isActive, (a) => (a ? "#16a34a" : "#ffffff"));
+  const dotBorder = useTransform(isActive, (a) =>
+    a ? "#16a34a" : "#d1d5db",
+  );
+  const dotText = useTransform(isActive, (a) => (a ? "#ffffff" : "#9ca3af"));
+
+  return (
+    <motion.div
+      className="absolute z-10 flex items-start gap-5"
+      style={{ left: step.cardPosition.left, top: step.cardPosition.top, opacity }}
+    >
+      {/* Dot marker on the SVG path */}
+      <motion.div
+        className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 shadow-sm transition-shadow duration-300"
+        style={{ backgroundColor: dotBg, borderColor: dotBorder }}
+      >
+        <motion.span
+          className="text-sm font-bold"
+          style={{ color: dotText }}
+        >
+          {index + 1}
+        </motion.span>
+      </motion.div>
+
+      {/* Card */}
+      <div className="max-w-xs rounded-2xl bg-white/90 p-5 shadow-lg backdrop-blur-sm ring-1 ring-gray-100">
+        <div className="mb-2 inline-flex rounded-lg bg-parkga-100 p-2">
+          <Icon className="h-5 w-5 text-parkga-600" />
+        </div>
+        <h3 className="text-lg font-semibold text-gray-900">{step.title}</h3>
+        <p className="mt-1 text-sm leading-relaxed text-gray-500">
+          {step.description}
+        </p>
+      </div>
+    </motion.div>
+  );
+}
+
+function HowItWorksSection() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end end"],
+  });
+
+  const scrollHintOpacity = useTransform(
+    scrollYProgress,
+    [0, 0.12, 0.25],
+    [1, 0.5, 0],
+  );
+
+  return (
+    <section ref={containerRef} className="relative h-[300vh]">
+      <div className="sticky top-0 flex h-screen items-center overflow-hidden bg-gradient-to-b from-white via-parkga-50/20 to-white">
+        {/* Title */}
+        <div className="pointer-events-none absolute left-0 right-0 top-8 z-20 mx-auto w-full text-center">
+          <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+            How It Works
+          </h2>
+          <p className="mt-2 text-sm text-gray-500">
+            Scroll to follow the journey
+          </p>
+        </div>
+
+        {/* Full-screen SVG */}
+        <svg
+          className="absolute inset-0 h-full w-full"
+          viewBox="0 0 1200 900"
+          preserveAspectRatio="xMidYMid meet"
+          style={{ pointerEvents: "none" }}
+        >
+          {/* Grey background path */}
+          <path
+            d={SVG_PATH}
+            stroke="#e5e7eb"
+            strokeWidth="4"
+            fill="none"
+            strokeLinecap="round"
+          />
+          {/* Animated green path */}
+          <motion.path
+            d={SVG_PATH}
+            stroke="#16a34a"
+            strokeWidth="4"
+            fill="none"
+            strokeLinecap="round"
+            style={{ pathLength: scrollYProgress }}
+          />
+        </svg>
+
+        {/* Step nodes */}
+        {HOW_IT_WORKS_STEPS.map((step, i) => (
+          <StepNode
+            key={step.title}
+            step={step}
+            index={i}
+            scrollYProgress={scrollYProgress}
+          />
+        ))}
+
+        {/* Scroll hint (fades after user starts scrolling) */}
+        <motion.div
+          className="absolute bottom-6 left-1/2 z-20 -translate-x-1/2"
+          style={{ opacity: scrollHintOpacity }}
+        >
+          <div className="flex flex-col items-center gap-1 text-xs text-gray-400">
+            <svg
+              className="h-5 w-5 animate-bounce"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 14l-7 7m0 0l-7-7m7 7V3"
+              />
+            </svg>
+            <span>Scroll</span>
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
 /* ── Home Page ──────────────────────────────────────────────────────── */
 export default function HomePage() {
   const router = useRouter();
@@ -372,40 +530,8 @@ export default function HomePage() {
       {/* ── Trending Spots Section ─────────────────────────────────────── */}
       <TrendingSpotsSection />
 
-      {/* ── Features Section ─────────────────────────────────────────── */}
-      <section className="py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              Why ParkGA?
-            </h2>
-            <p className="mt-4 text-lg text-gray-600">
-              We make parking simple for drivers and rewarding for hosts.
-            </p>
-          </div>
-          <div className="mt-16 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {features.map((feature) => {
-              const Icon = feature.icon;
-              return (
-                <div
-                  key={feature.title}
-                  className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-green-500 hover:shadow-lg"
-                >
-                  <div className="inline-flex rounded-lg bg-parkga-100 p-3">
-                    <Icon className="h-6 w-6 text-parkga-600" />
-                  </div>
-                  <h3 className="mt-4 text-lg font-semibold text-gray-900">
-                    {feature.title}
-                  </h3>
-                  <p className="mt-2 text-sm text-gray-500">
-                    {feature.description}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+      {/* ── How It Works Section (sticky-scroll) ──────────────────────────── */}
+      <HowItWorksSection />
 
       {/* ── Host Spotlight Section ──────────────────────────────────────── */}
       <section className="bg-slate-900 py-20">
