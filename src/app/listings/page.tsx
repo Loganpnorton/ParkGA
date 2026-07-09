@@ -170,7 +170,7 @@ function SpotHeroPopupCard({
           </div>
           <Link
             href={`/listings/${spot.id}`}
-            className="rounded-lg bg-blue-600 px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
+            className="rounded-lg bg-parkga-600 px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-parkga-700"
           >
             Book Now
           </Link>
