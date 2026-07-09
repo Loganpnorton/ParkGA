@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import Stripe from "stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { notifyBookingConfirmed } from "@/lib/notifications/booking-confirmed";
@@ -128,35 +128,34 @@ export async function POST(req: NextRequest) {
       `✅ Booking confirmed: session=${sessionId}, booking=${booking?.id}, payment_intent=${paymentIntentId}`,
     );
 
-    // ── 7. Return 200 to Stripe IMMEDIATELY ─────────────────────────
-    // Then fire notifications after the response.
+    // ── 7. Fire notifications (after response) ─────────────────────
     //
-    // ⚠️  If we await the notifications before returning, Stripe may
-    // time out and RETRY the event — and with two concurrent webhook
-    // invocations both passing the idempotency check (race condition),
-    // the guest & host each get duplicate emails.
+    // `after()` schedules the callback to run AFTER the HTTP response
+    // has been sent to Stripe, while keeping the Vercel serverless
+    // function alive until the callback completes.
     //
-    // Instead we fire the promise without awaiting and let Vercel's
-    // runtime keep it alive briefly after the response is sent.
+    // This solves two problems:
+    //   a) Stripe gets the 200 instantly → won't retry → no double emails
+    //   b) Vercel doesn't kill the function → emails actually send
 
-    const res = NextResponse.json({
+    after(() => {
+      console.log("📨 Firing booking notifications (post-response)...");
+      fireNotifications(supabase, {
+        spot_id,
+        guest_id,
+        start_time,
+        end_time,
+        totalPrice: Number(booking!.total_price),
+      }).catch((err: unknown) =>
+        console.error("Notifications error (non-fatal):", err),
+      );
+    });
+
+    return NextResponse.json({
       received: true,
       booking_id: booking?.id,
       status: "confirmed",
     });
-
-    console.log("📨 Firing booking notifications (post-response)...");
-    fireNotifications(supabase, {
-      spot_id,
-      guest_id,
-      start_time,
-      end_time,
-      totalPrice: Number(booking!.total_price),
-    }).catch((err: unknown) =>
-      console.error("Notifications error (non-fatal):", err),
-    );
-
-    return res;
   } catch (err) {
     console.error("Stripe webhook error:", err);
     const message =
