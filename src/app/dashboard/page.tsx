@@ -11,7 +11,6 @@ import {
   Loader2,
   Camera,
   Save,
-  LogOut,
   CreditCard,
   ExternalLink,
   CheckCircle,
@@ -163,6 +162,7 @@ function DashboardInner() {
       .from("bookings")
       .select("*, spot:spot_id(title, address, price_per_hour, price_per_event, images, host_id)")
       .eq("guest_id", user.id)
+      .in("status", ["confirmed", "active", "completed"])
       .order("start_time", { ascending: false });
 
     if (data) setMyBookings(data as unknown as Booking[]);
@@ -298,13 +298,6 @@ function DashboardInner() {
     }
   }
 
-  // Sign out
-  async function handleSignOut() {
-    await supabase.auth.signOut();
-    router.push("/");
-    router.refresh();
-  }
-
   // Review modal state
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [reviewForm, setReviewForm] = useState<ReviewFormData | null>(null);
@@ -406,9 +399,6 @@ function DashboardInner() {
           <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">Dashboard</h1>
           <p className="mt-1 text-sm text-gray-500">Manage your bookings, listings, and profile</p>
         </div>
-        <button onClick={handleSignOut} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50">
-          <LogOut className="h-4 w-4" /> Sign out
-        </button>
       </div>
 
       {stripeStatus === "success" && (
