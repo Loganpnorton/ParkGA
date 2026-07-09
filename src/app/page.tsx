@@ -1,8 +1,22 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Calendar, MapPin, Shield, DollarSign } from "lucide-react";
+import Link from "next/link";
+import { Search, Calendar, MapPin, Shield, DollarSign, Star, Loader2 } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+
+/* ── Types ────────────────────────────────────────────────────────────── */
+interface TrendingSpot {
+  id: string;
+  title: string;
+  address: string;
+  price_per_hour: number | null;
+  price_per_event: number | null;
+  images: string[];
+  avg_rating: number | null;
+  review_count: number;
+}
 
 /* ── Typing Effect Hook ───────────────────────────────────────────── */
 function useTypingEffect(
@@ -21,22 +35,18 @@ function useTypingEffect(
     const timeout = setTimeout(
       () => {
         if (!isDeleting) {
-          // Still typing
           if (text.length < currentWord.length) {
             setText(currentWord.slice(0, text.length + 1));
             return;
           }
-          // Finished typing → pause, then delete
           const pause = setTimeout(() => setIsDeleting(true), pauseTime);
           return () => clearTimeout(pause);
         }
 
-        // Deleting
         if (text.length > 0) {
           setText(currentWord.slice(0, text.length - 1));
           return;
         }
-        // Finished deleting → move to next word
         setIsDeleting(false);
         setWordIndex((prev) => (prev + 1) % words.length);
       },
@@ -78,6 +88,178 @@ const features = [
   },
 ];
 
+/* ── Skeleton Card ─────────────────────────────────────────────────── */
+function SkeletonCard() {
+  return (
+    <div className="animate-pulse rounded-xl border border-gray-200 overflow-hidden">
+      <div className="aspect-[4/3] bg-gray-200" />
+      <div className="p-4 space-y-3">
+        <div className="h-4 bg-gray-200 rounded w-3/4" />
+        <div className="h-3 bg-gray-200 rounded w-1/2" />
+        <div className="flex items-center gap-2">
+          <div className="h-4 bg-gray-200 rounded w-16" />
+          <div className="h-3 bg-gray-200 rounded w-12" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Spot Card ─────────────────────────────────────────────────────── */
+function SpotCard({ spot }: { spot: TrendingSpot }) {
+  const imageUrl =
+    spot.images && spot.images.length > 0
+      ? spot.images[0]
+      : "https://images.unsplash.com/photo-1506521781265-d8422e82f816?w=600&q=80";
+
+  const displayPrice =
+    spot.price_per_event ?? spot.price_per_hour ?? 0;
+  const priceLabel =
+    spot.price_per_event ? `$${Number(displayPrice).toFixed(0)}` : `$${Number(displayPrice).toFixed(2)}/hr`;
+  const unit = spot.price_per_event ? " per event" : "";
+
+  return (
+    <Link
+      href={`/listings/${spot.id}`}
+      className="group block rounded-xl border border-gray-200 overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1"
+    >
+      {/* Edge-to-edge image */}
+      <div className="relative aspect-[4/3] overflow-hidden">
+        <div
+          className="h-full w-full bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
+          style={{ backgroundImage: `url('${imageUrl}')` }}
+        />
+      </div>
+
+      {/* Details */}
+      <div className="p-4">
+        <h3 className="font-semibold text-gray-900 truncate group-hover:text-parkga-600 transition-colors">
+          {spot.title}
+        </h3>
+        <p className="mt-0.5 text-sm text-gray-500 truncate">{spot.address}</p>
+
+        <div className="mt-2 flex items-center justify-between">
+          <span className="text-lg font-bold text-gray-900">
+            {priceLabel}
+            <span className="text-sm font-normal text-gray-500">{unit}</span>
+          </span>
+
+          {/* Star rating */}
+          {spot.avg_rating ? (
+            <span className="flex items-center gap-1 text-sm text-gray-600">
+              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+              {spot.avg_rating.toFixed(1)}
+              <span className="text-gray-400">({spot.review_count})</span>
+            </span>
+          ) : null}
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+/* ── Trending Spots Section ────────────────────────────────────────── */
+function TrendingSpotsSection() {
+  const [spots, setSpots] = useState<TrendingSpot[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const supabase = createClient();
+
+    supabase
+      .from("spots")
+      .select(
+        `
+          id,
+          title,
+          address,
+          price_per_hour,
+          price_per_event,
+          images,
+          reviews ( rating )
+        `,
+        { count: "exact" },
+      )
+      .eq("active", true)
+      .limit(4)
+      .order("created_at", { ascending: false })
+      .then(({ data, error }) => {
+        if (error) {
+          console.error("Failed to load trending spots:", error);
+          setLoading(false);
+          return;
+        }
+
+        const mapped: TrendingSpot[] = (data ?? []).map((row: Record<string, unknown>) => {
+          const reviews = row.reviews as { rating: number }[] | null;
+          const ratings = reviews?.map((r) => r.rating) ?? [];
+          const avg =
+            ratings.length > 0
+              ? ratings.reduce((a, b) => a + b, 0) / ratings.length
+              : null;
+
+          return {
+            id: row.id as string,
+            title: row.title as string,
+            address: row.address as string,
+            price_per_hour: row.price_per_hour as number | null,
+            price_per_event: row.price_per_event as number | null,
+            images: (row.images as string[]) ?? [],
+            avg_rating: avg,
+            review_count: ratings.length,
+          };
+        });
+
+        setSpots(mapped);
+        setLoading(false);
+      });
+  }, []);
+
+  return (
+    <section className="py-20">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/* Section header */}
+        <div className="flex items-end justify-between">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+              Trending Parking Spots in Georgia
+            </h2>
+            <p className="mt-2 text-lg text-gray-600">
+              Popular spots drivers are booking right now.
+            </p>
+          </div>
+          <Link
+            href="/listings"
+            className="hidden sm:inline-flex items-center gap-1 text-sm font-semibold text-parkga-600 hover:text-parkga-700 transition-colors"
+          >
+            View all &rarr;
+          </Link>
+        </div>
+
+        {/* Grid */}
+        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {loading
+            ? Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
+            : spots.length > 0
+              ? spots.map((spot) => <SpotCard key={spot.id} spot={spot} />)
+              : Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
+        </div>
+
+        {/* Mobile "View all" link */}
+        <div className="mt-8 text-center sm:hidden">
+          <Link
+            href="/listings"
+            className="inline-flex items-center gap-1 text-sm font-semibold text-parkga-600 hover:text-parkga-700 transition-colors"
+          >
+            View all &rarr;
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ── Home Page ──────────────────────────────────────────────────────── */
 export default function HomePage() {
   const router = useRouter();
   const typedText = useTypingEffect(CYCLING_WORDS);
@@ -106,13 +288,10 @@ export default function HomePage() {
               "url('https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=1920&q=80')",
           }}
         />
-        {/* Dark overlay for readability */}
         <div className="absolute inset-0 bg-black/60" />
 
-        {/* Content */}
         <div className="relative z-10 mx-auto w-full max-w-7xl px-4 py-20 sm:px-6 lg:py-32">
           <div className="mx-auto max-w-3xl text-center">
-            {/* Headline with typing effect */}
             <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
               Find Parking for{" "}
               <span className="inline-block text-parkga-400">
@@ -130,7 +309,6 @@ export default function HomePage() {
             {/* ── Pill-Shaped Search Bar ──────────────────────────────── */}
             <div className="mt-10">
               <div className="mx-auto flex max-w-3xl items-center rounded-full bg-white p-2 shadow-2xl">
-                {/* Location */}
                 <div className="flex flex-1 items-center gap-2 px-4 py-2">
                   <Search className="h-5 w-5 shrink-0 text-gray-400" />
                   <input
@@ -143,21 +321,15 @@ export default function HomePage() {
                   />
                 </div>
 
-                {/* Divider */}
                 <div className="hidden h-8 w-px bg-gray-200 sm:block" />
 
-                {/* Date picker placeholder */}
                 <div className="hidden flex-1 items-center gap-2 px-4 py-2 sm:flex">
                   <Calendar className="h-5 w-5 shrink-0 text-gray-400" />
-                  <span className="whitespace-nowrap text-sm text-gray-400">
-                    Add dates
-                  </span>
+                  <span className="whitespace-nowrap text-sm text-gray-400">Add dates</span>
                 </div>
 
-                {/* Divider */}
                 <div className="hidden h-8 w-px bg-gray-200 sm:block" />
 
-                {/* Search CTA */}
                 <div className="px-2">
                   <button
                     onClick={handleSearch}
@@ -172,9 +344,11 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Subtle bottom fade to blend into next section */}
         <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white to-transparent" />
       </section>
+
+      {/* ── Trending Spots Section ─────────────────────────────────────── */}
+      <TrendingSpotsSection />
 
       {/* ── Features Section ─────────────────────────────────────────── */}
       <section className="py-20">
