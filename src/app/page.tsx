@@ -292,7 +292,7 @@ export default function HomePage() {
 
         <div className="relative z-10 mx-auto w-full max-w-7xl px-4 py-20 sm:px-6 lg:py-32">
           <div className="mx-auto max-w-3xl text-center">
-            <div className="min-h-[120px] md:min-h-[96px]">
+            <div className="flex items-center justify-center h-[140px] sm:h-[150px] lg:h-[170px]">
               <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
                 Find Parking for{" "}
                 <span className="inline-block text-parkga-400">
