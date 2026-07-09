@@ -113,7 +113,7 @@ export default function HowItWorks() {
     else setActiveIndex(2);
   });
 
-  /* Scroll hint fades out quickly as user progresses */
+  /* Scroll hint fades out almost immediately */
   const scrollOpacity = useTransform(
     scrollYProgress,
     [0, 0.05],
@@ -122,8 +122,8 @@ export default function HowItWorks() {
 
   return (
     <section ref={containerRef} className="relative h-[300vh]">
-      {/* ── Sticky container ──────────────────────────────────────────── */}
-      <div className="sticky top-0 flex h-screen w-full items-center justify-center overflow-hidden bg-white">
+      {/* ── Sticky container — `relative` provides abspos context ──────── */}
+      <div className="sticky top-0 relative flex h-screen w-full items-center justify-center overflow-hidden bg-white">
         {/* Dot-pattern background */}
         <div
           className="pointer-events-none absolute inset-0 opacity-[0.12]"
@@ -134,79 +134,7 @@ export default function HowItWorks() {
           }}
         />
 
-        {/* ── Tall Relative Canvas ─────────────────────────────────────── */}
-        <div className="flex flex-col items-center w-full max-w-5xl mx-auto">
-          {/* Title — OUTSIDE canvas with mb-12 breathing room */}
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              How It Works
-            </h2>
-            <p className="mt-2 text-sm text-gray-500">
-              Scroll to follow the journey
-            </p>
-          </div>
-
-          {/* Canvas */}
-          <div className="relative w-full h-[800px] md:h-[1200px]">
-          {/* SVG Elongated S-Curve */}
-          <svg
-            className="absolute inset-0 h-full w-full"
-            viewBox="0 0 100 200"
-            preserveAspectRatio="none"
-            style={{ pointerEvents: "none" }}
-          >
-            <defs>
-              <filter
-                id="glow"
-                x="-20%"
-                y="-20%"
-                width="140%"
-                height="140%"
-              >
-                <feGaussianBlur stdDeviation="1" result="blur" />
-                <feMerge>
-                  <feMergeNode in="blur" />
-                  <feMergeNode in="SourceGraphic" />
-                </feMerge>
-              </filter>
-            </defs>
-
-            {/* Grey background path — thin, elegant */}
-            <path
-              d={SVG_PATH}
-              stroke="#e5e7eb"
-              strokeWidth={1}
-              fill="none"
-              strokeLinecap="round"
-              vectorEffect="non-scaling-stroke"
-            />
-
-            {/* Animated green path — sleek laser */}
-            <motion.path
-              d={SVG_PATH}
-              stroke="#16a34a"
-              strokeWidth={2}
-              fill="none"
-              strokeLinecap="round"
-              vectorEffect="non-scaling-stroke"
-              filter="url(#glow)"
-              style={{ pathLength: scrollYProgress }}
-            />
-          </svg>
-
-          {/* Step Cards — anchored with translate-y to sit centered beside the curve */}
-          {STEPS.map((step, i) => (
-            <StepCard
-              key={step.title}
-              step={step}
-              index={i}
-              isActive={activeIndex === i}
-            />
-          ))}
-          </div>
-        </div>
-
-        {/* ── Scroll Hint ─────────────────────────────────────────────── */}
+        {/* ── Scroll Indicator (above everything, bottom of screen) ───── */}
         <motion.div
           className="absolute bottom-8 left-1/2 z-30 -translate-x-1/2 flex flex-col items-center gap-1"
           style={{ opacity: scrollOpacity }}
@@ -226,6 +154,65 @@ export default function HowItWorks() {
             />
           </svg>
         </motion.div>
+
+        {/* ── Content column ───────────────────────────────────────────── */}
+        <div className="flex flex-col items-center w-full max-w-5xl mx-auto">
+          {/* Title — breathing room via mb-12 */}
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+              How It Works
+            </h2>
+            <p className="mt-2 text-sm text-gray-500">
+              Scroll to follow the journey
+            </p>
+          </div>
+
+          {/* Canvas */}
+          <div className="relative w-full h-[800px] md:h-[1200px]">
+            {/* SVG Elongated S-Curve */}
+            <svg
+              className="absolute inset-0 h-full w-full"
+              viewBox="0 0 100 200"
+              preserveAspectRatio="none"
+              style={{ pointerEvents: "none" }}
+            >
+              {/* Grey background path — vectorEffect keeps it thin on stretched viewBox */}
+              <path
+                d={SVG_PATH}
+                stroke="#e5e7eb"
+                strokeWidth={1}
+                fill="none"
+                strokeLinecap="round"
+                vectorEffect="non-scaling-stroke"
+              />
+
+              {/* Animated green path — NO vectorEffect to avoid conflict
+                  with pathLength animation on stretched viewBox.
+                  CSS drop-shadow replaces SVG filter for clean rendering. */}
+              <motion.path
+                d={SVG_PATH}
+                stroke="#16a34a"
+                strokeWidth={3}
+                fill="none"
+                strokeLinecap="round"
+                style={{
+                  pathLength: scrollYProgress,
+                  filter: "drop-shadow(0 0 2px rgba(22, 163, 74, 0.5))",
+                }}
+              />
+            </svg>
+
+            {/* Step Cards */}
+            {STEPS.map((step, i) => (
+              <StepCard
+                key={step.title}
+                step={step}
+                index={i}
+                isActive={activeIndex === i}
+              />
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );
