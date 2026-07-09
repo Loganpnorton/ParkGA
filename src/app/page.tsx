@@ -323,8 +323,8 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* ── Bottom transition: green-900 → footer gray-50 ─────────────── */}
-        <div className="h-24 bg-gradient-to-b from-green-900 via-green-800/20 to-gray-50" />
+        {/* ── Bottom transition: seamless into footer's green-900 ── */}
+        <div className="h-8" />
       </section>
     </>
   );

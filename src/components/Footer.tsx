@@ -33,18 +33,18 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-gray-200 bg-gray-50">
+    <footer className="bg-green-900">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
             <Link href="/" className="flex items-center gap-2">
-              <Car className="h-6 w-6 text-parkga-600" />
-              <span className="text-lg font-bold tracking-tight text-gray-900">
-                Park<span className="text-parkga-600">GA</span>
+              <Car className="h-6 w-6 text-parkga-400" />
+              <span className="text-lg font-bold tracking-tight text-white">
+                Park<span className="text-parkga-400">GA</span>
               </span>
             </Link>
-            <p className="mt-3 text-sm text-gray-500">
+            <p className="mt-3 text-sm text-green-200">
               The peer-to-peer marketplace connecting drivers with affordable parking spots across Georgia.
             </p>
           </div>
@@ -52,7 +52,7 @@ export default function Footer() {
           {/* Link Columns */}
           {Object.values(footerLinks).map((section) => (
             <div key={section.title}>
-              <h3 className="text-sm font-semibold text-gray-900">
+              <h3 className="text-sm font-semibold text-green-100">
                 {section.title}
               </h3>
               <ul className="mt-3 space-y-2">
@@ -60,7 +60,7 @@ export default function Footer() {
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-sm text-gray-500 transition-colors hover:text-parkga-600"
+                      className="text-sm text-green-300 transition-colors hover:text-parkga-400"
                     >
                       {link.label}
                     </Link>
@@ -72,8 +72,8 @@ export default function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="mt-10 border-t border-gray-200 pt-6">
-          <p className="text-center text-xs text-gray-400">
+        <div className="mt-10 border-t border-green-800 pt-6">
+          <p className="text-center text-xs text-green-400">
             &copy; {currentYear} ParkGA. All rights reserved.
           </p>
         </div>

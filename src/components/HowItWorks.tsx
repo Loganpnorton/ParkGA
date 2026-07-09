@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { motion, useScroll, useMotionValueEvent, useTransform } from "framer-motion";
+import { motion, useScroll, useMotionValueEvent } from "framer-motion";
 
 /* ── Step Data ──────────────────────────────────────────────────────────── */
 const STEPS = [
@@ -113,13 +113,6 @@ export default function HowItWorks() {
     else setActiveIndex(2);
   });
 
-  /* Scroll hint fades out almost immediately */
-  const scrollOpacity = useTransform(
-    scrollYProgress,
-    [0, 0.05],
-    [1, 0],
-  );
-
   return (
     <section ref={containerRef} className="relative h-[300vh]">
       {/* ── Sticky container — `relative` provides abspos context ──────── */}
@@ -133,27 +126,6 @@ export default function HowItWorks() {
             backgroundSize: "24px 24px",
           }}
         />
-
-        {/* ── Scroll Indicator (fixed to viewport, bottom of screen) ──── */}
-        <motion.div
-          className="fixed bottom-8 left-1/2 z-50 -translate-x-1/2 flex flex-col items-center gap-1"
-          style={{ opacity: scrollOpacity, pointerEvents: "none" }}
-        >
-          <span className="text-xs text-gray-400">Scroll</span>
-          <svg
-            className="h-5 w-5 animate-bounce"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M19 14l-7 7m0 0l-7-7m7 7V3"
-            />
-          </svg>
-        </motion.div>
 
         {/* ── Content column ───────────────────────────────────────────── */}
         <div className="flex flex-col items-center w-full max-w-5xl mx-auto">
@@ -169,37 +141,34 @@ export default function HowItWorks() {
 
           {/* Canvas */}
           <div className="relative w-full h-[800px] md:h-[1200px]">
-            {/* SVG Elongated S-Curve */}
+            {/* SVG Elongated S-Curve — no preserveAspectRatio="none"
+                so the viewBox scales naturally, and vectorEffect +
+                pathLength work correctly together without artifacts */}
             <svg
               className="absolute inset-0 h-full w-full"
               viewBox="0 0 100 200"
-              preserveAspectRatio="none"
+              preserveAspectRatio="xMidYMid meet"
               style={{ pointerEvents: "none" }}
             >
-              {/* Grey background path — vectorEffect keeps it thin on stretched viewBox */}
+              {/* Grey background path */}
               <path
                 d={SVG_PATH}
                 stroke="#e5e7eb"
-                strokeWidth={1}
+                strokeWidth={1.5}
                 fill="none"
                 strokeLinecap="round"
-                vectorEffect="non-scaling-stroke"
               />
 
-              {/* Animated green path — vectorEffect prevents stroke warping
-                  on stretched viewBox. CSS drop-shadow for clean glow
-                  (no SVG filter to avoid render artifacts with pathLength). */}
+              {/* Animated green path — no vectorEffect needed since
+                  viewBox scales naturally, no SVG filter to avoid
+                  pathLength render conflicts */}
               <motion.path
                 d={SVG_PATH}
                 stroke="#16a34a"
                 strokeWidth={2}
                 fill="none"
                 strokeLinecap="round"
-                vectorEffect="non-scaling-stroke"
-                style={{
-                  pathLength: scrollYProgress,
-                  filter: "drop-shadow(0 0 2px rgba(22, 163, 74, 0.5))",
-                }}
+                style={{ pathLength: scrollYProgress }}
               />
             </svg>
 
