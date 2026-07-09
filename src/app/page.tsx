@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Search, Calendar, MapPin, Shield, DollarSign, Star, Loader2 } from "lucide-react";
@@ -17,6 +17,20 @@ interface TrendingSpot {
   avg_rating: number | null;
   review_count: number;
 }
+
+/* ── Fallback Images ────────────────────────────────────────────────────
+ * High-quality Unsplash images of driveways, suburban homes, garages, and
+ * parking scenes. Used when a spot has no images in the database.          */
+const FALLBACK_IMAGES = [
+  "https://images.unsplash.com/photo-1506521781265-d8422e82f816?w=600&q=80",
+  "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=600&q=80",
+  "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=80",
+  "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&q=80",
+  "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=600&q=80",
+  "https://images.unsplash.com/photo-1572120360610-d9f2e15e2fc1?w=600&q=80",
+  "https://images.unsplash.com/photo-1590674899484-d5640d46f70f?w=600&q=80",
+  "https://images.unsplash.com/photo-1605146769289-440113cc3d00?w=600&q=80",
+];
 
 /* ── Typing Effect Hook ───────────────────────────────────────────── */
 function useTypingEffect(
@@ -91,7 +105,7 @@ const features = [
 /* ── Skeleton Card ─────────────────────────────────────────────────── */
 function SkeletonCard() {
   return (
-    <div className="animate-pulse rounded-xl border border-gray-200 overflow-hidden">
+    <div className="min-w-[85vw] md:min-w-[300px] animate-pulse rounded-xl border border-gray-200 overflow-hidden">
       <div className="aspect-[4/3] bg-gray-200" />
       <div className="p-4 space-y-3">
         <div className="h-4 bg-gray-200 rounded w-3/4" />
@@ -106,11 +120,11 @@ function SkeletonCard() {
 }
 
 /* ── Spot Card ─────────────────────────────────────────────────────── */
-function SpotCard({ spot }: { spot: TrendingSpot }) {
+function SpotCard({ spot, fallbackIndex }: { spot: TrendingSpot; fallbackIndex: number }) {
   const imageUrl =
     spot.images && spot.images.length > 0
       ? spot.images[0]
-      : "https://images.unsplash.com/photo-1506521781265-d8422e82f816?w=600&q=80";
+      : FALLBACK_IMAGES[fallbackIndex % FALLBACK_IMAGES.length];
 
   const displayPrice =
     spot.price_per_event ?? spot.price_per_hour ?? 0;
@@ -121,7 +135,7 @@ function SpotCard({ spot }: { spot: TrendingSpot }) {
   return (
     <Link
       href={`/listings/${spot.id}`}
-      className="group block rounded-xl border border-gray-200 overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1"
+      className="group block min-w-[85vw] md:min-w-[300px] rounded-xl border border-gray-200 overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1 bg-white"
     >
       {/* Edge-to-edge image */}
       <div className="relative aspect-[4/3] overflow-hidden">
@@ -236,23 +250,29 @@ function TrendingSpotsSection() {
           </Link>
         </div>
 
-        {/* Grid */}
-        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {loading
-            ? Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
-            : spots.length > 0
-              ? spots.map((spot) => <SpotCard key={spot.id} spot={spot} />)
-              : Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
-        </div>
-
-        {/* Mobile "View all" link */}
-        <div className="mt-8 text-center sm:hidden">
-          <Link
-            href="/listings"
-            className="inline-flex items-center gap-1 text-sm font-semibold text-parkga-600 hover:text-parkga-700 transition-colors"
-          >
-            View all &rarr;
-          </Link>
+        {/* Horizontal snap carousel */}
+        <div className="mt-10 -ml-4 sm:-ml-6 lg:-ml-8">
+          <div className="hide-scrollbar flex snap-x snap-mandatory scroll-smooth gap-4 overflow-x-auto pl-4 sm:pl-6 lg:pl-8 pr-4 sm:pr-6 lg:pr-8">
+            {loading
+              ? Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="shrink-0 snap-start">
+                    <SkeletonCard />
+                  </div>
+                ))
+              : spots.length > 0
+                ? spots.map((spot, i) => (
+                    <div key={spot.id} className="shrink-0 snap-start">
+                      <SpotCard spot={spot} fallbackIndex={i} />
+                    </div>
+                  ))
+                : Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="shrink-0 snap-start">
+                      <SkeletonCard />
+                    </div>
+                  ))}
+            {/* Trailing spacer so last card peeks past right edge */}
+            <div className="shrink-0 w-2" />
+          </div>
         </div>
       </div>
     </section>

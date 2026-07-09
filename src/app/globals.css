@@ -55,6 +55,19 @@
 }
 
 /*
+ * ── Hide Scrollbar Utility ────────────────────────────────────────────
+ * Keeps scroll functionality while hiding the scrollbar for snap
+ * carousels. Works across WebKit and Firefox.
+ */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/*
  * ── SpotHero-style Mapbox Popup Overrides ──────────────────────────────
  * Strip default padding/background so our custom Tailwind card renders
  * edge-to-edge. The popup tip matches the card's bottom (white) to act
