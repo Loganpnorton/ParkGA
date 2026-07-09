@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import {
@@ -325,6 +325,14 @@ export default function ListingsPage() {
   const [loading, setLoading] = useState(true);
   const [selectedSpotId, setSelectedSpotId] = useState<string | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
+
+  // Map viewport bounds — updated on every pan/zoom
+  const [mapBounds, setMapBounds] = useState<{
+    north: number;
+    south: number;
+    east: number;
+    west: number;
+  } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   // Availability filter state
@@ -335,6 +343,18 @@ export default function ListingsPage() {
   const [filterActive, setFilterActive] = useState(false);
   const [checkingAvail, setCheckingAvail] = useState(false);
   const [availError, setAvailError] = useState<string | null>(null);
+
+  // ── Track map viewport bounds on pan/zoom ────────────────────────
+  const handleMapMove = useCallback((e: { target: { getBounds: () => mapboxgl.LngLatBounds | null } }) => {
+    const bounds = e.target.getBounds();
+    if (!bounds) return;
+    setMapBounds({
+      north: bounds.getNorth(),
+      south: bounds.getSouth(),
+      east: bounds.getEast(),
+      west: bounds.getWest(),
+    });
+  }, []);
 
   // ── Fetch spots on mount ─────────────────────────────────────────
   useEffect(() => {
@@ -440,6 +460,19 @@ export default function ListingsPage() {
     );
   }, [spots, searchQuery]);
 
+  // ── Filter by visible map bounds ─────────────────────────────────
+  const visibleSpots = useMemo(() => {
+    if (!mapBounds) return filteredSpots;
+    const { north, south, east, west } = mapBounds;
+    return filteredSpots.filter(
+      (s) =>
+        s.lat >= south &&
+        s.lat <= north &&
+        s.lng >= west &&
+        s.lng <= east,
+    );
+  }, [filteredSpots, mapBounds]);
+
   // ── Selected spot for map popup ──────────────────────────────────
   const selectedSpot = spots.find((s) => s.id === selectedSpotId);
 
@@ -490,8 +523,8 @@ export default function ListingsPage() {
             )}
           </div>
           <p className="mt-2 text-xs text-gray-500">
-            {filteredSpots.length} spot{filteredSpots.length !== 1 ? "s" : ""}{" "}
-            found near Truist Park
+            {visibleSpots.length} spot{visibleSpots.length !== 1 ? "s" : ""}{" "}
+            {mapBounds ? "in this area" : "found near Truist Park"}
           </p>
         </div>
 
@@ -581,9 +614,19 @@ export default function ListingsPage() {
                 Try a different search term
               </p>
             </div>
+          ) : visibleSpots.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <MapPin className="h-10 w-10 text-gray-300" />
+              <p className="mt-3 text-sm text-gray-500">
+                No spots found in this area
+              </p>
+              <p className="text-xs text-gray-400">
+                Try zooming out or moving the map
+              </p>
+            </div>
           ) : (
             <div className="space-y-3">
-              {filteredSpots.map((spot) => (
+              {visibleSpots.map((spot) => (
                 <div key={spot.id}>
                   <SpotCard
                     spot={spot}
@@ -611,6 +654,7 @@ export default function ListingsPage() {
             style={{ width: "100%", height: "100%" }}
             mapStyle="mapbox://styles/mapbox/streets-v12"
             onLoad={() => setMapLoaded(true)}
+            onMoveEnd={handleMapMove}
             attributionControl={true}
           >
             {mapLoaded &&
