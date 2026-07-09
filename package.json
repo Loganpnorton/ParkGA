@@ -19,6 +19,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-map-gl": "^8.1.1",
+    "resend": "^6.17.2",
     "sonner": "^2.0.7",
     "stripe": "^22.3.0",
     "twilio": "^6.0.2"

@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { notifyHostBookingConfirmed } from "@/lib/notifications/booking-confirmed";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { notifyBookingConfirmed } from "@/lib/notifications/booking-confirmed";
 
 /**
  * POST /api/notifications/booking-confirmed
  *
- * Triggered by the Stripe webhook after a booking transitions
- * to "confirmed". Sends an SMS to the host.
+ * Legacy endpoint — the Stripe webhook now fires notifications directly.
+ * Kept for manual testing / re-triggering.
  *
  * Body: { booking_id: string }
  */
@@ -21,14 +21,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Fetch booking with spot and host profile
-    const supabase = await createClient();
+    const supabase = createAdminClient();
+
+    // Fetch booking with spot + host + guest data
     const { data: booking } = await supabase
       .from("bookings")
       .select(
         `*,
-        spot:spot_id(title, address, host_id),
-        host:spot_id(host_id)`,
+        spot:spot_id(title, address, host_id)`,
       )
       .eq("id", booking_id)
       .single();
@@ -43,31 +43,29 @@ export async function POST(req: NextRequest) {
     // Fetch host profile
     const { data: hostProfile } = await supabase
       .from("profiles")
-      .select("name, phone")
+      .select("name, phone, email")
       .eq("id", (booking.spot as any).host_id)
       .single();
 
     if (!hostProfile?.phone) {
       console.warn(
-        `Host ${(booking.spot as any).host_id} has no phone number set. Skipping SMS.`,
+        `Host ${(booking.spot as any).host_id} has no phone — skipping SMS.`,
       );
-      return NextResponse.json({
-        sent: false,
-        reason: "Host has no phone number",
-      });
     }
 
     // Fetch guest profile
     const { data: guestProfile } = await supabase
       .from("profiles")
-      .select("name")
+      .select("name, email")
       .eq("id", booking.guest_id)
       .single();
 
-    await notifyHostBookingConfirmed({
-      hostPhone: hostProfile.phone,
-      hostName: hostProfile.name ?? "Host",
-      guestName: guestProfile?.name ?? "A guest",
+    await notifyBookingConfirmed({
+      hostPhone: hostProfile?.phone ?? "",
+      hostEmail: hostProfile?.email ?? "",
+      hostName: hostProfile?.name ?? "Host",
+      guestEmail: guestProfile?.email ?? "",
+      guestName: guestProfile?.name ?? "Guest",
       spotTitle: (booking.spot as any).title ?? "Parking Spot",
       spotAddress: (booking.spot as any).address ?? "",
       startTime: booking.start_time,

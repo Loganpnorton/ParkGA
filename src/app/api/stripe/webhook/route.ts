@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { notifyBookingConfirmed } from "@/lib/notifications/booking-confirmed";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "", {
   apiVersion: "2026-06-24.dahlia",
@@ -15,17 +16,14 @@ const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET ?? "";
  *
  * Security:
  * - Verifies the Stripe-Signature header using the webhook secret
- * - Uses the raw request body (required for signature verification)
+ * - Uses createAdminClient (SUPABASE_SERVICE_ROLE_KEY) to bypass RLS
  *
  * Idempotency:
- * - The checkout route stores session.id in booking.checkout_session_id
- * - The webhook queries by checkout_session_id; if found, returns 200 (already processed)
- * - This prevents double-booking if Stripe sends the event twice
+ * - Queries by checkout_session_id; if already confirmed, returns 200
  */
 export async function POST(req: NextRequest) {
   try {
     // ── 1. Read raw body ────────────────────────────────────────────
-    // Stripe requires the raw body for signature verification
     const rawBody = await req.text();
     const signature = req.headers.get("stripe-signature") ?? "";
 
@@ -51,7 +49,6 @@ export async function POST(req: NextRequest) {
 
     // ── 3. Handle only checkout.session.completed ───────────────────
     if (event.type !== "checkout.session.completed") {
-      // Other events (e.g. payment_intent.succeeded) are ignored
       return NextResponse.json({ received: true });
     }
 
@@ -73,10 +70,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ── 4. Idempotency check ────────────────────────────────────────
-    // Query for a booking with this checkout_session_id
-    const supabase = await createClient();
+    // ── 4. Use admin client (bypasses RLS) ──────────────────────────
+    const supabase = createAdminClient();
 
+    // ── 5. Idempotency check ────────────────────────────────────────
     const { data: existing } = await supabase
       .from("bookings")
       .select("id, status")
@@ -84,7 +81,6 @@ export async function POST(req: NextRequest) {
       .maybeSingle();
 
     if (existing && existing.status === "confirmed") {
-      // Already processed — idempotent
       return NextResponse.json({
         received: true,
         idempotent: true,
@@ -92,9 +88,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // ── 5. Upsert booking: update status to confirmed ───────────────
-    // Use upsert with checkout_session_id as the conflict key so that
-    // even if the webhook fires twice, only one update happens.
+    // ── 6. Upsert booking: update status to confirmed ───────────────
     const { data: booking, error: upsertError } = await supabase
       .from("bookings")
       .upsert(
@@ -112,7 +106,7 @@ export async function POST(req: NextRequest) {
           ignoreDuplicates: false,
         },
       )
-      .select("id")
+      .select("id, total_price")
       .single();
 
     if (upsertError) {
@@ -127,6 +121,21 @@ export async function POST(req: NextRequest) {
       `✅ Booking confirmed: session=${sessionId}, booking=${booking?.id}, payment_intent=${paymentIntentId}`,
     );
 
+    // ── 7. Fire notifications (best-effort, non-blocking) ───────────
+    // We fire and forget so a notification failure never causes a 500.
+    notifyBookingConfirmed
+      .apply(null, await gatherNotificationData(supabase, {
+        bookingId: booking!.id,
+        spot_id,
+        guest_id,
+        start_time,
+        end_time,
+        totalPrice: Number(booking!.total_price),
+      }))
+      .catch((err: unknown) =>
+        console.error("Notification error (non-fatal):", err),
+      );
+
     return NextResponse.json({
       received: true,
       booking_id: booking?.id,
@@ -140,3 +149,69 @@ export async function POST(req: NextRequest) {
   }
 }
 
+// ── Gather data for notifications ──────────────────────────────────────
+
+interface GatherInput {
+  bookingId: string;
+  spot_id: string;
+  guest_id: string;
+  start_time: string;
+  end_time: string;
+  totalPrice: number;
+}
+
+async function gatherNotificationData(
+  supabase: ReturnType<typeof createAdminClient>,
+  input: GatherInput,
+): Promise<Parameters<typeof notifyBookingConfirmed>> {
+  const { spot_id, guest_id, start_time, end_time, totalPrice } = input;
+
+  // Fetch spot + host profile + guest profile in parallel
+  const [spotResult, guestResult] = await Promise.all([
+    supabase
+      .from("spots")
+      .select("title, address, host_id")
+      .eq("id", spot_id)
+      .single(),
+    supabase
+      .from("profiles")
+      .select("name, phone, email")
+      .eq("id", guest_id)
+      .single(),
+  ]);
+
+  const spot = spotResult.data;
+  const guestProfile = guestResult.data;
+
+  if (!spot) {
+    console.error("Spot not found for notifications:", spot_id);
+    return [] as unknown as Parameters<typeof notifyBookingConfirmed>;
+  }
+
+  // Fetch host profile
+  const { data: hostProfile } = await supabase
+    .from("profiles")
+    .select("name, phone, email")
+    .eq("id", spot.host_id)
+    .single();
+
+  if (!hostProfile?.phone) {
+    console.error("Host phone missing — skipping SMS");
+    return [] as unknown as Parameters<typeof notifyBookingConfirmed>;
+  }
+
+  return [
+    {
+      hostPhone: hostProfile.phone,
+      hostEmail: hostProfile.email ?? "",
+      hostName: hostProfile.name ?? "Host",
+      guestEmail: guestProfile?.email ?? "",
+      guestName: guestProfile?.name ?? "Guest",
+      spotTitle: spot.title,
+      spotAddress: spot.address,
+      startTime: start_time,
+      endTime: end_time,
+      totalPrice,
+    },
+  ] as unknown as Parameters<typeof notifyBookingConfirmed>;
+}
