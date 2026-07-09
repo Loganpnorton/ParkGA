@@ -126,7 +126,10 @@ export async function POST(req: NextRequest) {
             currency: "usd",
             product_data: {
               name: spot.title ?? "Parking Spot",
-              description: `${spot.address ?? ""} — ${hours.toFixed(1)} hrs`,
+              description:
+                spot.price_per_event && hours <= 24
+                  ? `${spot.address ?? ""} — Event Parking`
+                  : `${spot.address ?? ""} — ${hours.toFixed(1)} hrs`,
               metadata: {
                 spot_id,
               },

@@ -128,24 +128,35 @@ export async function POST(req: NextRequest) {
       `✅ Booking confirmed: session=${sessionId}, booking=${booking?.id}, payment_intent=${paymentIntentId}`,
     );
 
-    // ── 7. Fire notifications ────────────────────────────────────────
-    // ⚠️  Must be awaited — Vercel's serverless runtime can freeze or
-    // kill the execution context immediately after the Response is
-    // returned. Without `await` the HTTP request to Resend never fires.
-    console.log("📨 Firing booking notifications...");
-    await fireNotifications(supabase, {
+    // ── 7. Return 200 to Stripe IMMEDIATELY ─────────────────────────
+    // Then fire notifications after the response.
+    //
+    // ⚠️  If we await the notifications before returning, Stripe may
+    // time out and RETRY the event — and with two concurrent webhook
+    // invocations both passing the idempotency check (race condition),
+    // the guest & host each get duplicate emails.
+    //
+    // Instead we fire the promise without awaiting and let Vercel's
+    // runtime keep it alive briefly after the response is sent.
+
+    const res = NextResponse.json({
+      received: true,
+      booking_id: booking?.id,
+      status: "confirmed",
+    });
+
+    console.log("📨 Firing booking notifications (post-response)...");
+    fireNotifications(supabase, {
       spot_id,
       guest_id,
       start_time,
       end_time,
       totalPrice: Number(booking!.total_price),
-    });
+    }).catch((err: unknown) =>
+      console.error("Notifications error (non-fatal):", err),
+    );
 
-    return NextResponse.json({
-      received: true,
-      booking_id: booking?.id,
-      status: "confirmed",
-    });
+    return res;
   } catch (err) {
     console.error("Stripe webhook error:", err);
     const message =
