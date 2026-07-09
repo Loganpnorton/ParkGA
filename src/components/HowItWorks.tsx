@@ -25,8 +25,8 @@ const STEPS = [
   },
 ] as const;
 
-/* ── SVG Winding Bezier Curve (viewBox 0 0 100 100) ─────────────────────── */
-const SVG_PATH = "M 12,10 C 40,5 68,18 80,38 C 88,54 62,76 18,86";
+/* ── Perfect S-Curve (viewBox 0 0 100 100) ──────────────────────────────── */
+const SVG_PATH = "M 35 15 C 80 15, 85 30, 85 50 C 85 70, 35 70, 35 85";
 
 /* ── Card Positions (% on the Relative Canvas) ──────────────────────────── */
 const CARD_POSITIONS: {
@@ -34,9 +34,9 @@ const CARD_POSITIONS: {
   left?: string;
   right?: string;
 }[] = [
-  { top: "8%", left: "0%" },   // Step 1 — top-left, alongside curve start
-  { top: "40%", right: "0%" },  // Step 2 — middle-right, alongside curve apex
-  { top: "76%", left: "0%" },   // Step 3 — bottom-left, alongside curve end
+  { top: "5%", left: "5%" },    // Step 1 — top-left, in negative space left of curve
+  { top: "42%", right: "5%" },  // Step 2 — middle-right, in negative space right of curve
+  { top: "78%", left: "5%" },   // Step 3 — bottom-left, in negative space left of curve
 ];
 
 /* ── Spring Image Variants ──────────────────────────────────────────────── */
@@ -88,7 +88,7 @@ function StepCard({
       <motion.img
         src={step.image}
         alt={step.title}
-        className="h-14 w-14 shrink-0 object-contain drop-shadow-2xl sm:h-16 sm:w-16"
+        className="h-24 w-24 shrink-0 object-contain drop-shadow-[0_20px_20px_rgba(0,0,0,0.25)] md:h-32 md:w-32"
         variants={IMAGE_VARIANTS}
         animate={isActive ? "active" : "inactive"}
       />
