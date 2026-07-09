@@ -21,6 +21,40 @@
 }
 
 /*
+ * ── Ken Burns Slow-Zoom Animation ──────────────────────────────────────
+ * Gently scales and translates the background image so it feels alive
+ * without being distracting. Used on the Hero background.
+ */
+@keyframes ken-burns {
+  0% {
+    transform: scale(1) translate(0, 0);
+  }
+  100% {
+    transform: scale(1.1) translate(-1.5%, -1%);
+  }
+}
+
+.animate-ken-burns {
+  animation: ken-burns 20s ease-in-out infinite alternate;
+}
+
+/*
+ * ── Cursor Blink for Typing Effect ─────────────────────────────────────
+ */
+@keyframes blink {
+  0%, 50% {
+    opacity: 1;
+  }
+  51%, 100% {
+    opacity: 0;
+  }
+}
+
+.animate-cursor {
+  animation: blink 0.75s step-end infinite;
+}
+
+/*
  * ── SpotHero-style Mapbox Popup Overrides ──────────────────────────────
  * Strip default padding/background so our custom Tailwind card renders
  * edge-to-edge. The popup tip matches the card's bottom (white) to act
