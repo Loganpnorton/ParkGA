@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -22,7 +22,6 @@ import {
   MapPin,
   Calendar,
   Clock,
-  DollarSign,
   Shield,
   Mail,
   Phone,
@@ -31,6 +30,7 @@ import {
   ChevronDown,
   ChevronRight,
   XCircle,
+  PencilLine,
 } from "lucide-react";
 
 const stripePublishableKey =
@@ -67,6 +67,13 @@ interface UserProfile {
   email: string;
   name: string | null;
   phone: string | null;
+}
+
+interface VehicleInfo {
+  make: string;
+  model: string;
+  color: string;
+  licensePlate: string;
 }
 
 // ─── Formatting helpers ────────────────────────────────────────────────
@@ -108,6 +115,7 @@ function AccordionCard({
   isOpen,
   onToggle,
   isComplete,
+  isDisabled,
   children,
 }: {
   step: number;
@@ -115,16 +123,25 @@ function AccordionCard({
   isOpen: boolean;
   onToggle: () => void;
   isComplete: boolean;
+  isDisabled?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md">
+    <div
+      className={`overflow-hidden rounded-xl border bg-white shadow-sm transition-all ${
+        isDisabled && !isComplete
+          ? "cursor-not-allowed border-gray-100 opacity-60"
+          : "border-gray-200 hover:shadow-md"
+      } ${isComplete && !isOpen ? "border-green-200" : ""}`}
+    >
       <button
         type="button"
-        onClick={onToggle}
-        className="flex w-full items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-gray-50/50"
+        onClick={isDisabled && !isComplete ? undefined : onToggle}
+        className={`flex w-full items-center gap-3 px-5 py-4 text-left transition-colors ${
+          isDisabled && !isComplete ? "" : "hover:bg-gray-50/50"
+        }`}
       >
-        {/* Step number */}
+        {/* Step number / completed badge */}
         <span
           className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
             isComplete
@@ -146,6 +163,11 @@ function AccordionCard({
           {title}
         </span>
 
+        {/* Summary when collapsed + complete */}
+        {isComplete && !isOpen && (
+          <span className="mr-1 text-xs text-green-600 font-medium">Complete</span>
+        )}
+
         {/* Chevron */}
         {isOpen ? (
           <ChevronDown className="h-4 w-4 text-gray-400" />
@@ -164,9 +186,11 @@ function AccordionCard({
 function PaymentFormContent({
   booking,
   onSuccess,
+  onComplete,
 }: {
   booking: BookingWithSpot;
   onSuccess: () => void;
+  onComplete: () => void;
 }) {
   const stripe = useStripe();
   const elements = useElements();
@@ -204,6 +228,7 @@ function PaymentFormContent({
     }
 
     // Payment succeeded without redirect (e.g., plain card payment)
+    onComplete();
     onSuccess();
   }
 
@@ -229,7 +254,7 @@ function PaymentFormContent({
       <button
         type="submit"
         disabled={!stripe || processing}
-        className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex w-full items-center justify-center gap-2 rounded-lg bg-parkga-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-parkga-700 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {processing ? (
           <>
@@ -279,9 +304,7 @@ function StarRatingDisplay({ rating }: { rating: number }) {
         <Star
           key={star}
           className={`h-3 w-3 ${
-            star <= rating
-              ? "fill-amber-400 text-amber-400"
-              : "text-gray-300"
+            star <= rating ? "fill-amber-400 text-amber-400" : "text-gray-300"
           }`}
         />
       ))}
@@ -305,8 +328,37 @@ export default function CheckoutPage() {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paid, setPaid] = useState(false);
 
-  // Accordion state — start with payment section open
-  const [openSection, setOpenSection] = useState<"contact" | "payment" | "vehicle">("payment");
+  // ── Editable contact fields ─────────────────────────────────────────
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+
+  // ── Vehicle info fields ─────────────────────────────────────────────
+  const [vehicle, setVehicle] = useState<VehicleInfo>({
+    make: "",
+    model: "",
+    color: "",
+    licensePlate: "",
+  });
+
+  // ── Accordion state ─────────────────────────────────────────────────
+  type Section = "contact" | "payment" | "vehicle";
+  const [openSection, setOpenSection] = useState<Section>("contact");
+
+  // Completion state
+  const [contactComplete, setContactComplete] = useState(false);
+  const [paymentComplete, setPaymentComplete] = useState(false);
+  const [vehicleComplete, setVehicleComplete] = useState(false);
+
+  // Derived: is contact info valid?
+  const isContactValid = email.trim().length > 0 && phone.trim().length > 0;
+
+  // ── Initialize from fetched profile ─────────────────────────────────
+  useEffect(() => {
+    if (profile) {
+      setEmail(profile.email);
+      setPhone(profile.phone ?? "");
+    }
+  }, [profile]);
 
   // ── Initialization ──────────────────────────────────────────────────
   useEffect(() => {
@@ -364,12 +416,15 @@ export default function CheckoutPage() {
 
       if (!cancelled) {
         setBooking(bookingData as BookingWithSpot);
-        setProfile({
+        const p: UserProfile = {
           id: user.id,
           email: user.email ?? "",
           name: profileData?.name ?? null,
           phone: profileData?.phone ?? null,
-        });
+        };
+        setProfile(p);
+        setEmail(p.email);
+        setPhone(p.phone ?? "");
       }
 
       // 4. Fetch spot details
@@ -426,13 +481,50 @@ export default function CheckoutPage() {
     };
   }, [bookingId, router]);
 
+  // ── Save profile changes to Supabase ────────────────────────────────
+  const saveContactToProfile = useCallback(async () => {
+    if (!profile?.id) return;
+    // Only save if phone actually changed from what's in the DB
+    const currentPhone = profile.phone ?? "";
+    if (phone === currentPhone) return;
+
+    await supabase
+      .from("profiles")
+      .update({ phone: phone || null, updated_at: new Date().toISOString() })
+      .eq("id", profile.id);
+  }, [profile, phone, supabase]);
+
+  // ── Handle "Continue" from contact info ─────────────────────────────
+  function handleContactContinue() {
+    if (!isContactValid) return;
+    setContactComplete(true);
+    saveContactToProfile();
+    setOpenSection("payment");
+  }
+
   // ── Handle successful payment ───────────────────────────────────────
   function handlePaymentSuccess() {
     toast.success("Booking confirmed! 🎉", {
-      description: "Your parking spot has been reserved. Check your dashboard for details.",
+      description:
+        "Your parking spot has been reserved. Check your dashboard for details.",
       duration: 5000,
     });
     router.push("/dashboard");
+  }
+
+  // ── Handle vehicle save ─────────────────────────────────────────────
+  function handleVehicleSave() {
+    setVehicleComplete(true);
+    setOpenSection("contact"); // collapse vehicle, user can review
+  }
+
+  // ── Handle "Pay & Complete" from vehicle (skipping vehicle) ─────────
+  function handleSkipVehicle() {
+    setVehicleComplete(true);
+    // If payment already complete, just stay here
+    if (paymentComplete) {
+      handlePaymentSuccess();
+    }
   }
 
   // ── Loading state ───────────────────────────────────────────────────
@@ -527,73 +619,92 @@ export default function CheckoutPage() {
               Complete your booking
             </h1>
             <p className="text-sm text-gray-500">
-              Review your details and confirm your parking spot.
+              Fill in your details below to reserve this parking spot.
             </p>
 
             <div className="mt-6 space-y-3">
-              {/* ── 1. Contact Info Card ───────────────────────────── */}
+              {/* ═══════════════════════════════════════════════════════
+                  1. CONTACT INFO CARD
+              ════════════════════════════════════════════════════════ */}
               <AccordionCard
                 step={1}
                 title="Contact info"
                 isOpen={openSection === "contact"}
-                onToggle={() =>
-                  setOpenSection(openSection === "contact" ? "payment" : "contact")
-                }
-                isComplete={false}
+                onToggle={() => setOpenSection(openSection === "contact" ? "payment" : "contact")}
+                isComplete={contactComplete}
               >
-                <div className="space-y-4">
+                <div className="space-y-5">
                   {/* Email */}
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50">
-                      <Mail className="h-4 w-4 text-blue-600" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-medium text-gray-500">
-                        Email address
-                      </p>
-                      <p className="mt-0.5 text-sm font-medium text-gray-900">
-                        {profile?.email ?? "—"}
-                      </p>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                      Email address
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="your@email.com"
+                        className="block w-full rounded-lg border border-gray-300 pl-10 pr-4 py-2.5 text-sm text-gray-900 transition-colors focus:border-parkga-500 focus:outline-none focus:ring-2 focus:ring-parkga-500/20"
+                      />
                     </div>
                   </div>
 
                   {/* Phone */}
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50">
-                      <Phone className="h-4 w-4 text-blue-600" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-medium text-gray-500">
-                        Phone number
-                      </p>
-                      <p className="mt-0.5 text-sm font-medium text-gray-900">
-                        {profile?.phone ?? "—"}
-                      </p>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                      Phone number
+                    </label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <input
+                        type="tel"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        placeholder="+1 (555) 123-4567"
+                        className="block w-full rounded-lg border border-gray-300 pl-10 pr-4 py-2.5 text-sm text-gray-900 transition-colors focus:border-parkga-500 focus:outline-none focus:ring-2 focus:ring-parkga-500/20"
+                      />
                     </div>
                   </div>
 
                   {/* SMS reminder note */}
-                  <div className="rounded-lg bg-blue-50 px-3 py-2.5">
-                    <p className="text-xs text-blue-700">
+                  <div className="rounded-lg bg-parkga-50 px-3 py-2.5">
+                    <p className="text-xs text-parkga-700">
                       <span className="font-medium">SMS reminders:</span> We'll
                       send you a text reminder before your reservation starts.
                       Manage notification preferences in your dashboard.
                     </p>
                   </div>
+
+                  {/* Continue button */}
+                  <button
+                    type="button"
+                    onClick={handleContactContinue}
+                    disabled={!isContactValid}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-parkga-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-parkga-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Continue to payment
+                  </button>
                 </div>
               </AccordionCard>
 
-              {/* ── 2. Payment Method Card ──────────────────────────── */}
+              {/* ═══════════════════════════════════════════════════════
+                  2. PAYMENT METHOD CARD
+              ════════════════════════════════════════════════════════ */}
               <AccordionCard
                 step={2}
                 title="Payment method"
                 isOpen={openSection === "payment"}
-                onToggle={() =>
-                  setOpenSection(openSection === "payment" ? "vehicle" : "payment")
-                }
-                isComplete={false}
+                onToggle={() => setOpenSection(openSection === "payment" ? "vehicle" : "payment")}
+                isComplete={paymentComplete}
+                isDisabled={!contactComplete}
               >
-                {clientSecret && stripePublishableKey ? (
+                {!contactComplete ? (
+                  <div className="py-4 text-center text-sm text-gray-400">
+                    Please complete your contact information first.
+                  </div>
+                ) : clientSecret && stripePublishableKey ? (
                   <Elements
                     stripe={stripePromise}
                     options={
@@ -602,7 +713,7 @@ export default function CheckoutPage() {
                         appearance: {
                           theme: "stripe",
                           variables: {
-                            colorPrimary: "#2563eb",
+                            colorPrimary: "#16a34a",
                             colorBackground: "#ffffff",
                             colorText: "#111827",
                             colorDanger: "#dc2626",
@@ -617,8 +728,8 @@ export default function CheckoutPage() {
                               boxShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
                             },
                             ".Input:focus": {
-                              border: "1px solid #2563eb",
-                              boxShadow: "0 0 0 3px rgba(37, 99, 235, 0.1)",
+                              border: "1px solid #16a34a",
+                              boxShadow: "0 0 0 3px rgba(22, 163, 74, 0.1)",
                             },
                             ".Label": {
                               fontSize: "13px",
@@ -633,6 +744,10 @@ export default function CheckoutPage() {
                     <PaymentFormContent
                       booking={booking!}
                       onSuccess={handlePaymentSuccess}
+                      onComplete={() => {
+                        setPaymentComplete(true);
+                        setOpenSection("vehicle");
+                      }}
                     />
                   </Elements>
                 ) : (
@@ -642,31 +757,119 @@ export default function CheckoutPage() {
                 )}
               </AccordionCard>
 
-              {/* ── 3. Vehicle Info Card (Placeholder) ──────────────── */}
+              {/* ═══════════════════════════════════════════════════════
+                  3. VEHICLE INFO CARD
+              ════════════════════════════════════════════════════════ */}
               <AccordionCard
                 step={3}
                 title="Vehicle details"
                 isOpen={openSection === "vehicle"}
-                onToggle={() =>
-                  setOpenSection(openSection === "vehicle" ? "payment" : "vehicle")
-                }
-                isComplete={false}
+                onToggle={() => setOpenSection(openSection === "vehicle" ? "contact" : "vehicle")}
+                isComplete={vehicleComplete}
+                isDisabled={!paymentComplete}
               >
-                <div className="flex flex-col items-center gap-3 py-4 text-center">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
-                    <Car className="h-6 w-6 text-gray-400" />
+                {!paymentComplete ? (
+                  <div className="py-4 text-center text-sm text-gray-400">
+                    Please complete your payment first.
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      Vehicle Details (Optional)
+                ) : (
+                  <div className="space-y-5">
+                    <p className="text-sm text-gray-600">
+                      Help the host identify your vehicle upon arrival. This
+                      step is optional.
                     </p>
-                    <p className="mt-1 text-xs text-gray-500">
-                      Add your vehicle information to help the host identify
-                      your car upon arrival. Available in your dashboard after
-                      booking.
-                    </p>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      {/* Make */}
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                          Make
+                        </label>
+                        <input
+                          type="text"
+                          value={vehicle.make}
+                          onChange={(e) =>
+                            setVehicle((v) => ({ ...v, make: e.target.value }))
+                          }
+                          placeholder="e.g. Honda"
+                          className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 transition-colors focus:border-parkga-500 focus:outline-none focus:ring-2 focus:ring-parkga-500/20"
+                        />
+                      </div>
+
+                      {/* Model */}
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                          Model
+                        </label>
+                        <input
+                          type="text"
+                          value={vehicle.model}
+                          onChange={(e) =>
+                            setVehicle((v) => ({ ...v, model: e.target.value }))
+                          }
+                          placeholder="e.g. Civic"
+                          className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 transition-colors focus:border-parkga-500 focus:outline-none focus:ring-2 focus:ring-parkga-500/20"
+                        />
+                      </div>
+
+                      {/* Color */}
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                          Color
+                        </label>
+                        <input
+                          type="text"
+                          value={vehicle.color}
+                          onChange={(e) =>
+                            setVehicle((v) => ({ ...v, color: e.target.value }))
+                          }
+                          placeholder="e.g. Silver"
+                          className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 transition-colors focus:border-parkga-500 focus:outline-none focus:ring-2 focus:ring-parkga-500/20"
+                        />
+                      </div>
+
+                      {/* License Plate */}
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1.5">
+                          License plate
+                        </label>
+                        <input
+                          type="text"
+                          value={vehicle.licensePlate}
+                          onChange={(e) =>
+                            setVehicle((v) => ({
+                              ...v,
+                              licensePlate: e.target.value,
+                            }))
+                          }
+                          placeholder="e.g. ABC 1234"
+                          className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 transition-colors focus:border-parkga-500 focus:outline-none focus:ring-2 focus:ring-parkga-500/20"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      {/* Save vehicle info */}
+                      <button
+                        type="button"
+                        onClick={handleVehicleSave}
+                        className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-parkga-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-parkga-700"
+                      >
+                        <Check className="h-4 w-4" />
+                        Save vehicle
+                      </button>
+
+                      {/* Skip */}
+                      <button
+                        type="button"
+                        onClick={handleSkipVehicle}
+                        className="flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-6 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                      >
+                        Skip
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )}
               </AccordionCard>
             </div>
 
@@ -708,9 +911,7 @@ export default function CheckoutPage() {
                   {avgRating !== null && (
                     <div className="mt-1.5 flex items-center gap-2">
                       <StarRatingDisplay rating={Math.round(avgRating)} />
-                      <span className="text-xs text-gray-500">
-                        {avgRating}
-                      </span>
+                      <span className="text-xs text-gray-500">{avgRating}</span>
                     </div>
                   )}
 
@@ -763,7 +964,9 @@ export default function CheckoutPage() {
                       <span>
                         Cancel until{" "}
                         <span className="font-medium">
-                          {booking ? getCancelDate(booking.start_time) : "the day before"}
+                          {booking
+                            ? getCancelDate(booking.start_time)
+                            : "the day before"}
                         </span>
                       </span>
                     </div>
