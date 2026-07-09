@@ -122,19 +122,13 @@ export async function POST(req: NextRequest) {
     );
 
     // ── 7. Fire notifications (best-effort, non-blocking) ───────────
-    // We fire and forget so a notification failure never causes a 500.
-    notifyBookingConfirmed
-      .apply(null, await gatherNotificationData(supabase, {
-        bookingId: booking!.id,
-        spot_id,
-        guest_id,
-        start_time,
-        end_time,
-        totalPrice: Number(booking!.total_price),
-      }))
-      .catch((err: unknown) =>
-        console.error("Notification error (non-fatal):", err),
-      );
+    fireNotifications(supabase, {
+      spot_id,
+      guest_id,
+      start_time,
+      end_time,
+      totalPrice: Number(booking!.total_price),
+    });
 
     return NextResponse.json({
       received: true,
@@ -149,10 +143,9 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// ── Gather data for notifications ──────────────────────────────────────
+// ── Fire notifications (non-blocking, best-effort) ─────────────────────
 
-interface GatherInput {
-  bookingId: string;
+interface NotifInput {
   spot_id: string;
   guest_id: string;
   start_time: string;
@@ -160,58 +153,58 @@ interface GatherInput {
   totalPrice: number;
 }
 
-async function gatherNotificationData(
+async function fireNotifications(
   supabase: ReturnType<typeof createAdminClient>,
-  input: GatherInput,
-): Promise<Parameters<typeof notifyBookingConfirmed>> {
+  input: NotifInput,
+): Promise<void> {
   const { spot_id, guest_id, start_time, end_time, totalPrice } = input;
 
-  // Fetch spot + host profile + guest profile in parallel
-  const [spotResult, guestResult] = await Promise.all([
-    supabase
-      .from("spots")
-      .select("title, address, host_id")
-      .eq("id", spot_id)
-      .single(),
-    supabase
+  try {
+    // Fetch spot + guest profile + host profile in parallel
+    const [spotResult, guestProfileResult, hostIdResult] = await Promise.all([
+      supabase.from("spots").select("title, address, host_id").eq("id", spot_id).single(),
+      supabase.from("profiles").select("name, phone").eq("id", guest_id).single(),
+      supabase.from("spots").select("host_id").eq("id", spot_id).single(),
+    ]);
+
+    const spot = spotResult.data;
+    const guestProfile = guestProfileResult.data;
+    const hostId = hostIdResult.data?.host_id;
+
+    if (!spot || !hostId) {
+      return console.error("Missing spot/host data for notifications");
+    }
+
+    // Fetch host profile
+    const { data: hostProfile } = await supabase
       .from("profiles")
-      .select("name, phone, email")
-      .eq("id", guest_id)
-      .single(),
-  ]);
+      .select("name, phone")
+      .eq("id", hostId)
+      .single();
 
-  const spot = spotResult.data;
-  const guestProfile = guestResult.data;
+    // Get emails from auth.users (admin API — always available)
+    const [guestUser, hostUser] = await Promise.all([
+      supabase.auth.admin.getUserById(guest_id).catch(() => ({ data: { user: null } })),
+      supabase.auth.admin.getUserById(hostId).catch(() => ({ data: { user: null } })),
+    ]);
 
-  if (!spot) {
-    console.error("Spot not found for notifications:", spot_id);
-    return [] as unknown as Parameters<typeof notifyBookingConfirmed>;
-  }
+    const guestEmail = guestUser?.data?.user?.email ?? "";
+    const hostEmail = hostUser?.data?.user?.email ?? "";
+    const hostPhone = hostProfile?.phone ?? "";
 
-  // Fetch host profile
-  const { data: hostProfile } = await supabase
-    .from("profiles")
-    .select("name, phone, email")
-    .eq("id", spot.host_id)
-    .single();
-
-  if (!hostProfile?.phone) {
-    console.error("Host phone missing — skipping SMS");
-    return [] as unknown as Parameters<typeof notifyBookingConfirmed>;
-  }
-
-  return [
-    {
-      hostPhone: hostProfile.phone,
-      hostEmail: hostProfile.email ?? "",
-      hostName: hostProfile.name ?? "Host",
-      guestEmail: guestProfile?.email ?? "",
+    await notifyBookingConfirmed({
+      hostPhone,
+      hostEmail,
+      hostName: hostProfile?.name ?? "Host",
+      guestEmail,
       guestName: guestProfile?.name ?? "Guest",
       spotTitle: spot.title,
       spotAddress: spot.address,
       startTime: start_time,
       endTime: end_time,
       totalPrice,
-    },
-  ] as unknown as Parameters<typeof notifyBookingConfirmed>;
+    });
+  } catch (err) {
+    console.error("Notifications error (non-fatal):", err);
+  }
 }

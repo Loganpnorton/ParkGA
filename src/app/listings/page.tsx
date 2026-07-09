@@ -344,9 +344,9 @@ export default function ListingsPage() {
   const [checkingAvail, setCheckingAvail] = useState(false);
   const [availError, setAvailError] = useState<string | null>(null);
 
-  // ── Track map viewport bounds on pan/zoom ────────────────────────
-  const handleMapMove = useCallback((e: { target: { getBounds: () => mapboxgl.LngLatBounds | null } }) => {
-    const bounds = e.target.getBounds();
+  // ── Read bounds from a Mapbox GL map instance ────────────────────
+  const setBoundsFromMap = useCallback((map: mapboxgl.Map) => {
+    const bounds = map.getBounds();
     if (!bounds) return;
     setMapBounds({
       north: bounds.getNorth(),
@@ -355,6 +355,14 @@ export default function ListingsPage() {
       west: bounds.getWest(),
     });
   }, []);
+
+  // ── Track map viewport bounds on pan/zoom ────────────────────────
+  const handleMapMove = useCallback(
+    (e: { target: mapboxgl.Map }) => {
+      setBoundsFromMap(e.target);
+    },
+    [setBoundsFromMap],
+  );
 
   // ── Fetch spots on mount ─────────────────────────────────────────
   useEffect(() => {
@@ -653,7 +661,10 @@ export default function ListingsPage() {
             initialViewState={TRUIST_CENTER}
             style={{ width: "100%", height: "100%" }}
             mapStyle="mapbox://styles/mapbox/streets-v12"
-            onLoad={() => setMapLoaded(true)}
+            onLoad={(e) => {
+              setMapLoaded(true);
+              setBoundsFromMap(e.target);
+            }}
             onMoveEnd={handleMapMove}
             attributionControl={true}
           >
