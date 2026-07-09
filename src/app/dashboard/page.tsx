@@ -64,11 +64,11 @@ const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
 ];
 
 const statusColors: Record<string, string> = {
-  pending: "bg-amber-100 text-amber-700",
-  confirmed: "bg-blue-100 text-blue-700",
+  pending: "bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20",
+  confirmed: "bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20",
   active: "bg-green-100 text-green-700",
   completed: "bg-gray-100 text-gray-600",
-  cancelled: "bg-red-100 text-red-700",
+  cancelled: "bg-gray-50 text-gray-600 ring-1 ring-inset ring-gray-500/10",
   refunded: "bg-purple-100 text-purple-700",
 };
 
@@ -448,14 +448,14 @@ function DashboardInner() {
               {/* Summary cards */}
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                 {[
-                  { label: "Upcoming", count: myBookings.filter(b => ["pending", "confirmed"].includes(b.status)).length, color: "text-blue-600", bg: "bg-blue-50" },
-                  { label: "Active", count: myBookings.filter(b => b.status === "active").length, color: "text-green-600", bg: "bg-green-50" },
-                  { label: "Completed", count: myBookings.filter(b => b.status === "completed").length, color: "text-gray-600", bg: "bg-gray-50" },
-                  { label: "Cancelled", count: myBookings.filter(b => b.status === "cancelled").length, color: "text-red-600", bg: "bg-red-50" },
+                  { label: "Upcoming", count: myBookings.filter(b => ["pending", "confirmed"].includes(b.status)).length, color: "text-green-600" },
+                  { label: "Active", count: myBookings.filter(b => b.status === "active").length, color: "text-green-600" },
+                  { label: "Completed", count: myBookings.filter(b => b.status === "completed").length, color: "text-green-600" },
+                  { label: "Cancelled", count: myBookings.filter(b => b.status === "cancelled").length, color: "text-gray-400" },
                 ].map(stat => (
-                  <div key={stat.label} className={`rounded-xl border border-gray-200 ${stat.bg} p-4`}>
+                  <div key={stat.label} className="bg-white border border-gray-200 rounded-xl shadow-sm p-4">
                     <p className={`text-2xl font-bold ${stat.color}`}>{stat.count}</p>
-                    <p className="text-xs text-gray-500">{stat.label}</p>
+                    <p className="text-gray-500 font-medium text-sm">{stat.label}</p>
                   </div>
                 ))}
               </div>
@@ -487,7 +487,7 @@ function DashboardInner() {
                               {booking.spot?.address ?? ""}
                             </p>
                           </div>
-                          <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${statusColors[booking.status] ?? "bg-gray-100 text-gray-600"}`}>
+                          <span className={`shrink-0 rounded-md px-2 py-1 text-xs font-medium ${statusColors[booking.status] ?? "bg-gray-50 text-gray-600 ring-1 ring-inset ring-gray-500/10"}`}>
                             {booking.status}
                           </span>
                         </div>
@@ -507,7 +507,7 @@ function DashboardInner() {
                     <div className="mt-3 flex items-center gap-2 border-t border-gray-100 pt-3">
                       {isUpcoming && (
                         <>
-                          <Link href={`/listings/${booking.spot_id}`} className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50">
+                          <Link href={`/listings/${booking.spot_id}`} className="rounded-lg bg-white border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50">
                             View Spot
                           </Link>
                           {booking.status === "pending" && (
@@ -520,7 +520,7 @@ function DashboardInner() {
                       )}
                       {(booking.status === "completed" || (booking.status === "confirmed" && new Date(booking.end_time) < new Date())) && (
                         <button onClick={() => openReviewModal(booking)}
-                          className="inline-flex items-center gap-1 rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700 transition-colors hover:bg-amber-100">
+                          className="inline-flex items-center gap-1 rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white border border-transparent shadow-sm transition-colors hover:bg-green-700">
                           <Star className="h-3 w-3" />
                           Leave a Review
                         </button>
