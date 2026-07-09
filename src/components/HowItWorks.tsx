@@ -25,8 +25,8 @@ const STEPS = [
   },
 ] as const;
 
-/* ── Complex Elongated S-Curve (viewBox 0 0 100 200) ──────────────────── */
-const SVG_PATH = "M 20 10 C 20 70, 80 50, 80 100 C 80 150, 20 130, 20 190";
+/* ── Wide Sweeping S-Curve (viewBox 0 0 100 200) ─────────────────────── */
+const SVG_PATH = "M 15 5 C 15 60, 85 40, 85 100 C 85 160, 15 140, 15 195";
 
 /* ── Spring Image Variants ──────────────────────────────────────────────── */
 const IMAGE_VARIANTS = {
@@ -57,16 +57,16 @@ function StepCard({
   isActive: boolean;
 }) {
   const positionClasses = [
-    "absolute top-[5%] left-[30%] -translate-y-1/2 z-20",
-    "absolute top-[50%] right-[30%] -translate-y-1/2 z-20",
-    "absolute top-[95%] left-[30%] -translate-y-1/2 z-20",
+    "absolute top-[10%] left-[40%] md:left-[35%] -translate-y-1/2 z-20",
+    "absolute top-[50%] right-[40%] md:right-[35%] -translate-y-1/2 z-20",
+    "absolute top-[90%] left-[40%] md:left-[35%] -translate-y-1/2 z-20",
   ][index];
 
   return (
     <motion.div
       className={`${positionClasses} flex items-center gap-5 rounded-2xl border border-gray-100 bg-white/80 p-5 shadow-xl backdrop-blur-md sm:gap-6 sm:p-6`}
       style={{
-        width: "clamp(240px, 36vw, 340px)",
+        width: "clamp(300px, 36vw, 450px)",
       }}
       animate={{
         opacity: isActive ? 1 : 0.35,
@@ -134,18 +134,20 @@ export default function HowItWorks() {
           }}
         />
 
-        {/* Title */}
-        <div className="pointer-events-none absolute left-0 right-0 top-8 z-30 mx-auto w-full text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-            How It Works
-          </h2>
-          <p className="mt-2 text-sm text-gray-500">
-            Scroll to follow the journey
-          </p>
-        </div>
-
         {/* ── Tall Relative Canvas ─────────────────────────────────────── */}
-        <div className="relative mx-auto w-full max-w-5xl h-[800px] md:h-[1200px]">
+        <div className="flex flex-col items-center w-full max-w-5xl mx-auto">
+          {/* Title — OUTSIDE canvas with mb-12 breathing room */}
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+              How It Works
+            </h2>
+            <p className="mt-2 text-sm text-gray-500">
+              Scroll to follow the journey
+            </p>
+          </div>
+
+          {/* Canvas */}
+          <div className="relative w-full h-[800px] md:h-[1200px]">
           {/* SVG Elongated S-Curve */}
           <svg
             className="absolute inset-0 h-full w-full"
@@ -176,6 +178,7 @@ export default function HowItWorks() {
               strokeWidth={1}
               fill="none"
               strokeLinecap="round"
+              vectorEffect="non-scaling-stroke"
             />
 
             {/* Animated green path — sleek laser */}
@@ -185,6 +188,7 @@ export default function HowItWorks() {
               strokeWidth={2}
               fill="none"
               strokeLinecap="round"
+              vectorEffect="non-scaling-stroke"
               filter="url(#glow)"
               style={{ pathLength: scrollYProgress }}
             />
@@ -199,11 +203,12 @@ export default function HowItWorks() {
               isActive={activeIndex === i}
             />
           ))}
+          </div>
         </div>
 
         {/* ── Scroll Hint ─────────────────────────────────────────────── */}
         <motion.div
-          className="absolute bottom-6 left-1/2 z-20 -translate-x-1/2"
+          className="absolute bottom-6 left-1/2 z-30 -translate-x-1/2"
           style={{ opacity: scrollHintOpacity }}
         >
           <div className="flex flex-col items-center gap-1 text-xs text-gray-400">
