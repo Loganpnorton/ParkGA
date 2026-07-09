@@ -129,10 +129,6 @@ export async function POST(req: NextRequest) {
     );
 
     // ── 7. Fire notifications ────────────────────────────────────────
-    // Awaited inline so Vercel doesn't kill the function before the
-    // Resend API call completes. The idempotency check at the top of
-    // this handler prevents duplicate processing if Stripe retries.
-    console.log("📨 Firing booking notifications...");
     await fireNotifications(supabase, {
       spot_id,
       guest_id,

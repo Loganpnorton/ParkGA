@@ -30,7 +30,7 @@ function stripQuotes(s: string): string {
 
 /**
  * Send an email via Resend.
- * Logs detailed diagnostics so failures are visible in Vercel logs.
+ * Failures are logged but never thrown.
  */
 export async function sendEmail({
   from,
@@ -43,13 +43,9 @@ export async function sendEmail({
   to: string | string[];
   subject: string;
   html: string;
-  /** Optional unique key — prevents duplicate sends when Stripe retries */
+  /** Prevents duplicate sends when Stripe retries */
   idempotencyKey?: string;
 }): Promise<boolean> {
-  const recipients = Array.isArray(to) ? to.join(", ") : to;
-
-  console.log(`📨 [Resend] Attempting send — from="${from}" to="${recipients}" subject="${subject}"`);
-
   try {
     const resend = getResendClient();
     const { data, error } = await resend.emails.send({
@@ -61,38 +57,21 @@ export async function sendEmail({
     });
 
     if (error) {
-      console.error(
-        `❌ [Resend] API returned an error — name=${error.name} message=${error.message}`,
-        error,
-      );
+      console.error("Resend error:", error);
       return false;
     }
 
-    console.log(`✅ [Resend] Email sent successfully — id=${data?.id} to="${recipients}"`);
     return true;
   } catch (err) {
-    console.error(
-      `❌ [Resend] Exception thrown — ${err instanceof Error ? err.message : String(err)}`,
-      err,
-    );
+    console.error("Resend exception:", err);
     return false;
   }
 }
 
 /**
  * Default "from" address for transactional booking emails.
- *
- * The env-var value is passed through stripQuotes() so that setting
- *   RESEND_FROM="ParkGA <bookings@parkga.com>"
- * in a .env file or Vercel dashboard does NOT include the literal
- * quote characters in the actual from-string (which would break
- * Resend's format validation).
- *
- * ⚠️ Resend free/test tier:
- * - Defaults to "ParkGA <onboarding@resend.dev>"
- * - This only delivers to the email you registered to Resend with.
- * - To send to any recipient, verify a domain at
- *   https://resend.com/domains  and set RESEND_FROM accordingly.
+ * Set via RESEND_FROM env var.  Falls back to onboarding@resend.dev
+ * for the free tier (only delivers to the Resend account owner).
  */
 export const BOOKINGS_FROM = stripQuotes(
   process.env.RESEND_FROM ?? "ParkGA <onboarding@resend.dev>",
