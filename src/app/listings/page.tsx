@@ -18,6 +18,9 @@ import {
   Calendar,
   CalendarClock,
   AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+  PersonStanding,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import "mapbox-gl/dist/mapbox-gl.css";
@@ -61,6 +64,121 @@ interface Profile {
 
 // Truist Park center coordinates
 const TRUIST_CENTER = { latitude: 33.8905, longitude: -84.468, zoom: 14 };
+
+// ─── SpotHero-style Popup Card ─────────────────────────────────────────
+function SpotHeroPopupCard({
+  spot,
+  onClose,
+}: {
+  spot: Spot;
+  onClose: () => void;
+}) {
+  const [imageIndex, setImageIndex] = useState(0);
+  const images = spot.images ?? [];
+  const hasMultiple = images.length > 1;
+
+  const prevImage = () =>
+    setImageIndex((i) => (i - 1 + images.length) % images.length);
+  const nextImage = () =>
+    setImageIndex((i) => (i + 1) % images.length);
+
+  const price = spot.price_per_hour ?? spot.price_per_event ?? 0;
+  const priceLabel = spot.price_per_hour ? "/hr" : "/event";
+
+  return (
+    <div className="w-72 overflow-hidden rounded-xl bg-gray-900 text-white shadow-2xl">
+      {/* ── Image section ───────────────────────────────────────────── */}
+      <div className="relative h-40 w-full">
+        {images.length > 0 ? (
+          <img
+            src={images[imageIndex]}
+            alt={spot.title}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-gray-800">
+            <Car className="h-10 w-10 text-gray-500" />
+          </div>
+        )}
+
+        {/* Close button — top-right */}
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white/90 transition-colors hover:bg-black/70"
+          aria-label="Close"
+        >
+          <X className="h-4 w-4" />
+        </button>
+
+        {/* Image carousel arrows — middle-left / middle-right */}
+        {hasMultiple && (
+          <>
+            <button
+              type="button"
+              onClick={prevImage}
+              className="absolute left-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white/90 transition-colors hover:bg-black/70"
+              aria-label="Previous image"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={nextImage}
+              className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white/90 transition-colors hover:bg-black/70"
+              aria-label="Next image"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </>
+        )}
+
+        {/* Image count pill — bottom-center */}
+        {images.length > 0 && (
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-2.5 py-0.5 text-[11px] font-medium text-white/90">
+            {imageIndex + 1}/{images.length}
+          </div>
+        )}
+      </div>
+
+      {/* ── Details section ─────────────────────────────────────────── */}
+      <div className="flex flex-col gap-2 p-4">
+        {/* Row 1 — Title + Price */}
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="truncate text-lg font-bold leading-tight">
+            {spot.title}
+          </h3>
+          <span className="shrink-0 text-xl font-bold">
+            ${price}
+          </span>
+        </div>
+
+        {/* Row 2 — Walking distance + Subtotal /hr */}
+        <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center gap-1.5 text-gray-300">
+            <PersonStanding className="h-4 w-4" />
+            <span>10 min (0.5 mi)</span>
+          </div>
+          <span className="text-gray-400">{priceLabel}</span>
+        </div>
+
+        {/* Row 3 — Rating + Book Now */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1 text-sm text-gray-300">
+            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+            <span>4.5 (12)</span>
+          </div>
+          <Link
+            href={`/listings/${spot.id}`}
+            className="rounded-lg bg-blue-600 px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
+          >
+            Book Now
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ─── Spot Card ─────────────────────────────────────────────────────────
 function SpotCard({
@@ -205,8 +323,7 @@ export default function ListingsPage() {
   const [spots, setSpots] = useState<Spot[]>([]);
   const [profiles, setProfiles] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [selectedSpotId, setSelectedSpotId] = useState<string | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -323,10 +440,8 @@ export default function ListingsPage() {
     );
   }, [spots, searchQuery]);
 
-  // ── Selected spot for map fly-to ──────────────────────────────────
-  const selectedSpot = spots.find((s) => s.id === selectedId);
-  const hoveredSpot = spots.find((s) => s.id === hoveredId);
-  const activeMapSpot = hoveredSpot ?? selectedSpot;
+  // ── Selected spot for map popup ──────────────────────────────────
+  const selectedSpot = spots.find((s) => s.id === selectedSpotId);
 
   // ── Feature helper ────────────────────────────────────────────────
   const featureLabels: Record<string, string> = {
@@ -469,18 +584,16 @@ export default function ListingsPage() {
           ) : (
             <div className="space-y-3">
               {filteredSpots.map((spot) => (
-                <div
-                  key={spot.id}
-                  onMouseEnter={() => setHoveredId(spot.id)}
-                  onMouseLeave={() => setHoveredId(null)}
-                >
+                <div key={spot.id}>
                   <SpotCard
                     spot={spot}
                     hostName={profiles[spot.host_id] ?? "Host"}
                     onSelect={() =>
-                      setSelectedId(selectedId === spot.id ? null : spot.id)
+                      setSelectedSpotId(
+                        selectedSpotId === spot.id ? null : spot.id,
+                      )
                     }
-                    isSelected={selectedId === spot.id}
+                    isSelected={selectedSpotId === spot.id}
                   />
                 </div>
               ))}
@@ -502,107 +615,49 @@ export default function ListingsPage() {
           >
             {mapLoaded &&
               filteredSpots.map((spot) => {
-                const isActive =
-                  spot.id === (hoveredId ?? selectedId);
+                const isSelected = spot.id === selectedSpotId;
                 const price = spot.price_per_hour
                   ? `$${spot.price_per_hour}`
                   : `$${spot.price_per_event}`;
+
+                // ── Selected spot → render Popup (no Marker) ──
+                if (isSelected) {
+                  return (
+                    <Popup
+                      key={spot.id}
+                      longitude={spot.lng}
+                      latitude={spot.lat}
+                      anchor="bottom"
+                      offset={[0, -10]}
+                      closeButton={false}
+                      closeOnClick={false}
+                    >
+                      <SpotHeroPopupCard
+                        spot={spot}
+                        onClose={() => setSelectedSpotId(null)}
+                      />
+                    </Popup>
+                  );
+                }
+
+                // ── Non-selected spot → small pill Marker ──
                 return (
                   <Marker
                     key={spot.id}
                     longitude={spot.lng}
                     latitude={spot.lat}
                     anchor="bottom"
-                    onClick={() =>
-                      setSelectedId(selectedId === spot.id ? null : spot.id)
-                    }
+                    onClick={() => setSelectedSpotId(spot.id)}
                   >
                     <button
                       type="button"
-                      className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold shadow-lg transition-all ${
-                        isActive
-                          ? "scale-110 bg-gray-900 text-white shadow-xl"
-                          : "bg-white text-gray-900 shadow-md hover:scale-110 hover:bg-gray-900 hover:text-white hover:shadow-xl"
-                      }`}
+                      className="flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-bold text-gray-900 shadow-lg transition-all hover:scale-110 hover:bg-gray-900 hover:text-white hover:shadow-xl"
                     >
                       {price}
                     </button>
                   </Marker>
                 );
               })}
-
-            {/* Active popup */}
-            {mapLoaded && activeMapSpot && (
-              <Popup
-                longitude={activeMapSpot.lng}
-                latitude={activeMapSpot.lat}
-                anchor="bottom"
-                offset={[0, -20]}
-                onClose={() => {
-                  setSelectedId(null);
-                  setHoveredId(null);
-                }}
-                closeButton={false}
-                closeOnClick={false}
-                className="[&_.mapboxgl-popup-content]:!rounded-xl [&_.mapboxgl-popup-content]:!p-0 [&_.mapboxgl-popup-content]:!shadow-lg"
-              >
-                <div className="relative max-w-[240px] p-3">
-                  {/* Custom close button */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedId(null);
-                      setHoveredId(null);
-                    }}
-                    className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-gray-500 shadow-sm transition-colors hover:bg-gray-100 hover:text-gray-700"
-                    aria-label="Close popup"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-
-                  <h4 className="pr-8 text-sm font-semibold text-gray-900 line-clamp-2">
-                    {activeMapSpot.title}
-                  </h4>
-                  <p className="mt-1 flex items-center gap-1 text-xs text-gray-500">
-                    <MapPin className="h-3 w-3" />
-                    {activeMapSpot.address}
-                  </p>
-                  <div className="mt-2 flex items-center gap-2">
-                    {activeMapSpot.price_per_hour && (
-                      <span className="text-sm font-bold text-parkga-600">
-                        ${activeMapSpot.price_per_hour}
-                        <span className="text-xs font-normal text-gray-500">/hr</span>
-                      </span>
-                    )}
-                    {activeMapSpot.price_per_event && (
-                      <span className="text-xs text-gray-500">
-                        ${activeMapSpot.price_per_event}
-                        <span className="text-gray-400">/event</span>
-                      </span>
-                    )}
-                  </div>
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    {Object.entries(activeMapSpot.features)
-                      .filter(([, v]) => v)
-                      .slice(0, 3)
-                      .map(([k]) => (
-                        <span
-                          key={k}
-                          className="inline-block rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-600"
-                        >
-                          {featureLabels[k] ?? k.replace(/_/g, " ")}
-                        </span>
-                      ))}
-                  </div>
-                  <Link
-                    href={`/listings/${activeMapSpot.id}`}
-                    className="mt-3 block rounded-lg bg-parkga-600 px-3 py-1.5 text-center text-xs font-semibold text-white transition-colors hover:bg-parkga-700"
-                  >
-                    Book Now
-                  </Link>
-                </div>
-              </Popup>
-            )}
           </Map>
         ) : (
           <div className="flex h-full items-center justify-center bg-gray-50">
@@ -612,7 +667,8 @@ export default function ListingsPage() {
                 Map requires a Mapbox token
               </p>
               <p className="text-xs text-gray-400">
-                Set <code className="text-amber-600">NEXT_PUBLIC_MAPBOX_TOKEN</code>
+                Set{" "}
+                <code className="text-amber-600">NEXT_PUBLIC_MAPBOX_TOKEN</code>
               </p>
             </div>
           </div>

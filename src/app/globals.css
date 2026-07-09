@@ -19,3 +19,24 @@
     @apply bg-white text-gray-900 antialiased;
   }
 }
+
+/*
+ * ── SpotHero-style Mapbox Popup Overrides ──────────────────────────────
+ * Strip all default Mapbox popup chrome so our custom Tailwind card
+ * renders edge-to-edge inside the popup container.
+ */
+.mapboxgl-popup-content {
+  padding: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0.75rem !important; /* matches Tailwind rounded-xl */
+  overflow: hidden !important;
+}
+
+.mapboxgl-popup-tip {
+  display: none !important;
+}
+
+.mapboxgl-popup {
+  max-width: none !important;
+}
