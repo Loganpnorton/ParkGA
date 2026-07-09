@@ -37,11 +37,14 @@ export async function sendEmail({
   to,
   subject,
   html,
+  idempotencyKey,
 }: {
   from: string;
   to: string | string[];
   subject: string;
   html: string;
+  /** Optional unique key — prevents duplicate sends when Stripe retries */
+  idempotencyKey?: string;
 }): Promise<boolean> {
   const recipients = Array.isArray(to) ? to.join(", ") : to;
 
@@ -54,6 +57,7 @@ export async function sendEmail({
       to,
       subject,
       html,
+      ...(idempotencyKey ? { idempotencyKey } : {}),
     });
 
     if (error) {

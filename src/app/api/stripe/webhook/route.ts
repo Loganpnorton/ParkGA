@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse, after } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { notifyBookingConfirmed } from "@/lib/notifications/booking-confirmed";
@@ -128,27 +128,18 @@ export async function POST(req: NextRequest) {
       `✅ Booking confirmed: session=${sessionId}, booking=${booking?.id}, payment_intent=${paymentIntentId}`,
     );
 
-    // ── 7. Fire notifications (after response) ─────────────────────
-    //
-    // `after()` schedules the callback to run AFTER the HTTP response
-    // has been sent to Stripe, while keeping the Vercel serverless
-    // function alive until the callback completes.
-    //
-    // This solves two problems:
-    //   a) Stripe gets the 200 instantly → won't retry → no double emails
-    //   b) Vercel doesn't kill the function → emails actually send
-
-    after(() => {
-      console.log("📨 Firing booking notifications (post-response)...");
-      fireNotifications(supabase, {
-        spot_id,
-        guest_id,
-        start_time,
-        end_time,
-        totalPrice: Number(booking!.total_price),
-      }).catch((err: unknown) =>
-        console.error("Notifications error (non-fatal):", err),
-      );
+    // ── 7. Fire notifications ────────────────────────────────────────
+    // Awaited inline so Vercel doesn't kill the function before the
+    // Resend API call completes. The idempotency check at the top of
+    // this handler prevents duplicate processing if Stripe retries.
+    console.log("📨 Firing booking notifications...");
+    await fireNotifications(supabase, {
+      spot_id,
+      guest_id,
+      start_time,
+      end_time,
+      totalPrice: Number(booking!.total_price),
+      sessionId,
     });
 
     return NextResponse.json({
@@ -172,13 +163,14 @@ interface NotifInput {
   start_time: string;
   end_time: string;
   totalPrice: number;
+  sessionId: string;
 }
 
 async function fireNotifications(
   supabase: ReturnType<typeof createAdminClient>,
   input: NotifInput,
 ): Promise<void> {
-  const { spot_id, guest_id, start_time, end_time, totalPrice } = input;
+  const { spot_id, guest_id, start_time, end_time, totalPrice, sessionId } = input;
 
   try {
     // Fetch spot + guest profile + host profile in parallel
@@ -224,6 +216,7 @@ async function fireNotifications(
       startTime: start_time,
       endTime: end_time,
       totalPrice,
+      idempotencyKey: sessionId,
     });
   } catch (err) {
     console.error("Notifications error (non-fatal):", err);

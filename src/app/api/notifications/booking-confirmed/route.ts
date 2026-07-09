@@ -71,6 +71,7 @@ export async function POST(req: NextRequest) {
       startTime: booking.start_time,
       endTime: booking.end_time,
       totalPrice: Number(booking.total_price),
+      idempotencyKey: booking_id,
     });
 
     return NextResponse.json({ sent: true });

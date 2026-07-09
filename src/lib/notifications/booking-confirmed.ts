@@ -174,6 +174,11 @@ export interface BookingConfirmedInput {
   endTime: string;
   /** Total price in dollars */
   totalPrice: number;
+  /**
+   * Stable unique string for Resend idempotency (e.g. checkout_session_id).
+   * Prevents duplicate emails if Stripe retries the webhook event.
+   */
+  idempotencyKey: string;
 }
 
 // ── Main ───────────────────────────────────────────────────────────────
@@ -192,6 +197,7 @@ export async function notifyBookingConfirmed(
     endTime,
     totalPrice,
     spotAddress,
+    idempotencyKey,
   } = input;
 
   const dateStr   = formatDate(startTime);
@@ -234,6 +240,7 @@ export async function notifyBookingConfirmed(
       ctaText: "View My Booking",
       ctaUrl: dashUrl,
     }),
+    idempotencyKey: `booking-confirmed-guest-${idempotencyKey}`,
   });
 
   // ── 3. Email to Host ─────────────────────────────────────────────
@@ -254,5 +261,6 @@ export async function notifyBookingConfirmed(
       ctaText: "Go to Dashboard",
       ctaUrl: dashUrl,
     }),
+    idempotencyKey: `booking-confirmed-host-${idempotencyKey}`,
   });
 }
