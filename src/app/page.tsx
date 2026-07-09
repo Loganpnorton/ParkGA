@@ -292,8 +292,8 @@ export default function HomePage() {
 
         <div className="relative z-10 mx-auto w-full max-w-7xl px-4 py-20 sm:px-6 lg:py-32">
           <div className="mx-auto max-w-3xl text-center">
-            <div className="flex items-center justify-center h-[140px] sm:h-[150px] lg:h-[170px]">
-              <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
+            <div className="flex items-center justify-center h-[48px] sm:h-[56px] md:h-[72px] lg:h-[80px] xl:h-[96px]">
+              <h1 className="whitespace-nowrap text-xl font-extrabold tracking-tight text-white sm:text-2xl md:text-4xl lg:text-5xl xl:text-6xl">
                 Find Parking for{" "}
                 <span className="inline-block text-parkga-400">
                   {typedText}
@@ -302,14 +302,14 @@ export default function HomePage() {
               </h1>
             </div>
 
-            <p className="mt-6 text-lg leading-8 text-gray-300">
+            <p className="mt-4 text-sm leading-7 text-gray-300 sm:text-base sm:leading-8 md:mt-6 md:text-lg">
               ParkGA is the peer-to-peer marketplace that connects drivers with
               affordable parking spots hosted by locals. Skip the expensive lots
               and park smarter.
             </p>
 
             {/* ── Pill-Shaped Search Bar ──────────────────────────────── */}
-            <div className="mt-10">
+            <div className="mt-6 md:mt-10">
               <div className="mx-auto flex max-w-3xl items-center rounded-full bg-white p-2 shadow-2xl">
                 <div className="flex flex-1 items-center gap-2 px-4 py-2">
                   <Search className="h-5 w-5 shrink-0 text-gray-400" />
