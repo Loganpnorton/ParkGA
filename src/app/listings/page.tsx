@@ -86,7 +86,7 @@ function SpotHeroPopupCard({
   const priceLabel = spot.price_per_hour ? "/hr" : "/event";
 
   return (
-    <div className="w-72 overflow-hidden rounded-xl border border-gray-200 bg-white text-gray-900 shadow-2xl">
+    <div className="w-72 overflow-hidden rounded-xl border border-gray-200 bg-white text-gray-900">
       {/* ── Image section ───────────────────────────────────────────── */}
       <div className="relative h-40 w-full">
         {images.length > 0 ? (
