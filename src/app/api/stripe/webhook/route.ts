@@ -128,8 +128,12 @@ export async function POST(req: NextRequest) {
       `✅ Booking confirmed: session=${sessionId}, booking=${booking?.id}, payment_intent=${paymentIntentId}`,
     );
 
-    // ── 7. Fire notifications (best-effort, non-blocking) ───────────
-    fireNotifications(supabase, {
+    // ── 7. Fire notifications ────────────────────────────────────────
+    // ⚠️  Must be awaited — Vercel's serverless runtime can freeze or
+    // kill the execution context immediately after the Response is
+    // returned. Without `await` the HTTP request to Resend never fires.
+    console.log("📨 Firing booking notifications...");
+    await fireNotifications(supabase, {
       spot_id,
       guest_id,
       start_time,

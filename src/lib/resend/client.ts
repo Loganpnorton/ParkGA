@@ -21,8 +21,16 @@ export function getResendClient(): Resend {
 }
 
 /**
+ * Strip wrapping quotes from a string.
+ * Vercel / .env files may include literal " or ' around a value.
+ */
+function stripQuotes(s: string): string {
+  return s.replace(/^["']|["']$/g, "").trim();
+}
+
+/**
  * Send an email via Resend.
- * Silently logs errors so a failure here doesn't crash the caller.
+ * Logs detailed diagnostics so failures are visible in Vercel logs.
  */
 export async function sendEmail({
   from,
@@ -35,6 +43,10 @@ export async function sendEmail({
   subject: string;
   html: string;
 }): Promise<boolean> {
+  const recipients = Array.isArray(to) ? to.join(", ") : to;
+
+  console.log(`📨 [Resend] Attempting send — from="${from}" to="${recipients}" subject="${subject}"`);
+
   try {
     const resend = getResendClient();
     const { data, error } = await resend.emails.send({
@@ -45,16 +57,19 @@ export async function sendEmail({
     });
 
     if (error) {
-      console.error("❌ Resend email error:", error);
+      console.error(
+        `❌ [Resend] API returned an error — name=${error.name} message=${error.message}`,
+        error,
+      );
       return false;
     }
 
-    console.log(`📧 Email sent to ${to}: id=${data?.id}`);
+    console.log(`✅ [Resend] Email sent successfully — id=${data?.id} to="${recipients}"`);
     return true;
   } catch (err) {
     console.error(
-      "❌ Failed to send email via Resend:",
-      err instanceof Error ? err.message : err,
+      `❌ [Resend] Exception thrown — ${err instanceof Error ? err.message : String(err)}`,
+      err,
     );
     return false;
   }
@@ -63,13 +78,18 @@ export async function sendEmail({
 /**
  * Default "from" address for transactional booking emails.
  *
- * ⚠️ Resend free/test tier REQUIREMENTS:
- * - The `from` domain MUST be verified in your Resend dashboard.
- * - Until you verify a domain, set RESEND_FROM to
- *   "ParkGA <onboarding@resend.dev>" — this only delivers to the
- *   email address you signed up to Resend with.
- * - Once you verify a domain (e.g. parkga.com), set
+ * The env-var value is passed through stripQuotes() so that setting
  *   RESEND_FROM="ParkGA <bookings@parkga.com>"
+ * in a .env file or Vercel dashboard does NOT include the literal
+ * quote characters in the actual from-string (which would break
+ * Resend's format validation).
+ *
+ * ⚠️ Resend free/test tier:
+ * - Defaults to "ParkGA <onboarding@resend.dev>"
+ * - This only delivers to the email you registered to Resend with.
+ * - To send to any recipient, verify a domain at
+ *   https://resend.com/domains  and set RESEND_FROM accordingly.
  */
-export const BOOKINGS_FROM =
-  process.env.RESEND_FROM ?? "ParkGA <onboarding@resend.dev>";
+export const BOOKINGS_FROM = stripQuotes(
+  process.env.RESEND_FROM ?? "ParkGA <onboarding@resend.dev>",
+);
