@@ -4,34 +4,15 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { Search, Calendar, MapPin, Shield, DollarSign, Star, Loader2, Car, CreditCard } from "lucide-react";
+import { Search, Calendar, MapPin, Shield, DollarSign, Car, CreditCard } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import TrendingCarousel, {
+  type TrendingSpot,
+  enforceSpotImages,
+} from "@/components/TrendingCarousel";
 
 /* ── Types ────────────────────────────────────────────────────────────── */
-interface TrendingSpot {
-  id: string;
-  title: string;
-  address: string;
-  price_per_hour: number | null;
-  price_per_event: number | null;
-  images: string[];
-  avg_rating: number | null;
-  review_count: number;
-}
-
-/* ── Fallback Images ────────────────────────────────────────────────────
- * High-quality Unsplash images of driveways, suburban homes, garages, and
- * parking scenes. Used when a spot has no images in the database.          */
-const FALLBACK_IMAGES = [
-  "https://images.unsplash.com/photo-1506521781265-d8422e82f816?w=600&q=80",
-  "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=600&q=80",
-  "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=80",
-  "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&q=80",
-  "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=600&q=80",
-  "https://images.unsplash.com/photo-1572120360610-d9f2e15e2fc1?w=600&q=80",
-  "https://images.unsplash.com/photo-1590674899484-d5640d46f70f?w=600&q=80",
-  "https://images.unsplash.com/photo-1605146769289-440113cc3d00?w=600&q=80",
-];
+/* (TrendingSpot is now imported from TrendingCarousel)                    */
 
 /* ── Typing Effect Hook ───────────────────────────────────────────── */
 function useTypingEffect(
@@ -75,76 +56,6 @@ function useTypingEffect(
 }
 
 const CYCLING_WORDS = ["Braves Games.", "The BeltLine.", "UGA Tailgates.", "Georgia."];
-
-/* ── Skeleton Card ─────────────────────────────────────────────────── */
-function SkeletonCard() {
-  return (
-    <div className="min-w-[85vw] md:min-w-[300px] animate-pulse rounded-xl border border-gray-200 overflow-hidden">
-      <div className="aspect-[4/3] bg-gray-200" />
-      <div className="p-4 space-y-3">
-        <div className="h-4 bg-gray-200 rounded w-3/4" />
-        <div className="h-3 bg-gray-200 rounded w-1/2" />
-        <div className="flex items-center gap-2">
-          <div className="h-4 bg-gray-200 rounded w-16" />
-          <div className="h-3 bg-gray-200 rounded w-12" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ── Spot Card ─────────────────────────────────────────────────────── */
-function SpotCard({ spot, fallbackIndex }: { spot: TrendingSpot; fallbackIndex: number }) {
-  const imageUrl =
-    spot.images && spot.images.length > 0
-      ? spot.images[0]
-      : FALLBACK_IMAGES[fallbackIndex % FALLBACK_IMAGES.length];
-
-  const displayPrice =
-    spot.price_per_event ?? spot.price_per_hour ?? 0;
-  const priceLabel =
-    spot.price_per_event ? `$${Number(displayPrice).toFixed(0)}` : `$${Number(displayPrice).toFixed(2)}/hr`;
-  const unit = spot.price_per_event ? " per event" : "";
-
-  return (
-    <Link
-      href={`/listings/${spot.id}`}
-      className="group block min-w-[85vw] md:min-w-[300px] rounded-xl border border-gray-200 overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1 bg-white"
-    >
-      {/* Edge-to-edge image */}
-      <div className="relative aspect-[4/3] overflow-hidden">
-        <div
-          className="h-full w-full bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
-          style={{ backgroundImage: `url('${imageUrl}')` }}
-        />
-      </div>
-
-      {/* Details */}
-      <div className="p-4">
-        <h3 className="font-semibold text-gray-900 truncate group-hover:text-parkga-600 transition-colors">
-          {spot.title}
-        </h3>
-        <p className="mt-0.5 text-sm text-gray-500 truncate">{spot.address}</p>
-
-        <div className="mt-2 flex items-center justify-between">
-          <span className="text-lg font-bold text-gray-900">
-            {priceLabel}
-            <span className="text-sm font-normal text-gray-500">{unit}</span>
-          </span>
-
-          {/* Star rating */}
-          {spot.avg_rating ? (
-            <span className="flex items-center gap-1 text-sm text-gray-600">
-              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-              {spot.avg_rating.toFixed(1)}
-              <span className="text-gray-400">({spot.review_count})</span>
-            </span>
-          ) : null}
-        </div>
-      </div>
-    </Link>
-  );
-}
 
 /* ── Trending Spots Section ────────────────────────────────────────── */
 function TrendingSpotsSection() {
@@ -203,6 +114,8 @@ function TrendingSpotsSection() {
       });
   }, []);
 
+  const enforcedSpots = enforceSpotImages(spots);
+
   return (
     <section className="py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -224,29 +137,9 @@ function TrendingSpotsSection() {
           </Link>
         </div>
 
-        {/* Horizontal snap carousel */}
-        <div className="mt-10 -ml-4 sm:-ml-6 lg:-ml-8">
-          <div className="hide-scrollbar flex snap-x snap-mandatory scroll-smooth gap-4 overflow-x-auto pl-4 sm:pl-6 lg:pl-8 pr-4 sm:pr-6 lg:pr-8">
-            {loading
-              ? Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="shrink-0 snap-start">
-                    <SkeletonCard />
-                  </div>
-                ))
-              : spots.length > 0
-                ? spots.map((spot, i) => (
-                    <div key={spot.id} className="shrink-0 snap-start">
-                      <SpotCard spot={spot} fallbackIndex={i} />
-                    </div>
-                  ))
-                : Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="shrink-0 snap-start">
-                      <SkeletonCard />
-                    </div>
-                  ))}
-            {/* Trailing spacer so last card peeks past right edge */}
-            <div className="shrink-0 w-2" />
-          </div>
+        {/* Framer Motion center-focus carousel */}
+        <div className="mt-10">
+          <TrendingCarousel spots={enforcedSpots} loading={loading} />
         </div>
       </div>
     </section>
