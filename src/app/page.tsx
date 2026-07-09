@@ -147,47 +147,127 @@ function TrendingSpotsSection() {
 }
 
 /* ── How It Works Section (Sticky Scroll) ─────────────────────────── */
-const HOW_IT_WORKS_STEPS = [
+const SVG_PATH =
+  "M 120,160 C 480,130 180,440 600,440 C 1020,440 720,750 1020,750";
+
+/** Floating Map UI — Step 1 infographic */
+function FloatingMap() {
+  return (
+    <motion.div
+      className="relative h-28 w-32 rounded-xl border border-gray-200 bg-white shadow-lg overflow-hidden"
+      animate={{ y: [0, -10, 0] }}
+      transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+    >
+      {/* Grid streets */}
+      <div className="absolute inset-0 bg-[linear-gradient(#e5e7eb_1px,transparent_1px),linear-gradient(90deg,#e5e7eb_1px,transparent_1px)] bg-[size:16px_16px]" />
+      {/* Map pin */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+        <div className="flex flex-col items-center">
+          <div className="h-5 w-5 rounded-full bg-parkga-500 flex items-center justify-center shadow-lg">
+            <div className="h-2 w-2 rounded-full bg-white" />
+          </div>
+          <div className="h-3 w-0.5 bg-parkga-700" />
+        </div>
+      </div>
+      {/* $20 badge */}
+      <div className="absolute top-2 right-2 rounded-md bg-green-500 px-2 py-0.5 text-xs font-bold text-white shadow">
+        $20
+      </div>
+    </motion.div>
+  );
+}
+
+/** Tilted Credit Card — Step 2 infographic */
+function FloatingCreditCard() {
+  return (
+    <motion.div
+      className="relative h-24 w-36 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 p-4 text-white shadow-2xl rotate-6"
+      animate={{ y: [0, -8, 0], rotate: [6, 8, 6] }}
+      transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+    >
+      {/* Chip */}
+      <div className="mb-3 h-6 w-8 rounded-md bg-gradient-to-br from-yellow-300 to-yellow-500 shadow-inner" />
+      <p className="text-xs tracking-wider text-slate-300">•••• 4242</p>
+      <div className="mt-1 flex items-center justify-between">
+        <p className="text-[10px] text-slate-400">VALID THRU 12/28</p>
+        {/* Stripe/Apple Pay logos */}
+        <div className="flex gap-1">
+          <div className="h-3 w-5 rounded bg-white/10 flex items-center justify-center text-[6px] text-white/60 font-bold">SP</div>
+          <div className="h-3 w-5 rounded bg-white/10 flex items-center justify-center text-[6px] text-white/60 font-bold">AP</div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+/** Glowing Digital Pass — Step 3 infographic */
+function FloatingPass() {
+  return (
+    <motion.div
+      className="relative h-28 w-36 rounded-xl border border-green-400/40 bg-gradient-to-br from-green-50 to-white p-4 shadow-[0_0_30px_-8px_rgba(22,163,74,0.25)] overflow-hidden"
+      initial={{ x: 40, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+    >
+      {/* Decorative top bar */}
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-parkga-400 to-parkga-600" />
+      <div className="mt-1 flex items-center gap-2">
+        <div className="h-6 w-6 rounded-full bg-parkga-500 flex items-center justify-center">
+          <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <span className="text-xs font-bold text-green-700">CONFIRMED</span>
+      </div>
+      <p className="mt-2 text-[10px] text-gray-500">ParkGA Digital Pass</p>
+      <div className="mt-1 h-1 w-full rounded-full bg-green-100">
+        <div className="h-1 w-3/4 rounded-full bg-gradient-to-r from-parkga-400 to-parkga-600" />
+      </div>
+      <p className="mt-1 text-[9px] text-gray-400">Scan to park • #PKGA-2841</p>
+      {/* Glow dot */}
+      <div className="absolute -bottom-2 -right-2 h-12 w-12 rounded-full bg-parkga-400/10 blur-xl" />
+    </motion.div>
+  );
+}
+
+/* ── Individual step node ─────────────────────────────────────────── */
+const STEP_DATA = [
   {
     title: "Find a Spot",
     description:
       "Browse hundreds of verified parking spots near stadiums, airports, and event venues across Georgia. Filter by price, location, and date.",
     icon: Search,
-    cardPosition: { left: "22%", top: "12%" },
+    cardPosition: { left: "27%", top: "8%" },
+    InfoGraphic: FloatingMap,
   },
   {
     title: "Book & Pay",
     description:
       "Reserve instantly with secure checkout. No hidden fees, no hassle. Your booking is protected from the moment you pay.",
     icon: CreditCard,
-    cardPosition: { left: "12%", top: "42%" },
+    cardPosition: { left: "3%", top: "36%" },
+    InfoGraphic: FloatingCreditCard,
   },
   {
     title: "Park & Go",
     description:
       "Get digital access instructions and park with confidence. We handle the verification so you can focus on the game, event, or wherever life takes you.",
     icon: Car,
-    cardPosition: { left: "38%", top: "70%" },
+    cardPosition: { left: "27%", top: "62%" },
+    InfoGraphic: FloatingPass,
   },
 ];
 
-/** Smooth SVG winding path connecting the 3 step nodes */
-const SVG_PATH =
-  "M 120,160 C 480,130 180,440 600,440 C 1020,440 720,750 1020,750";
-
-/* ── Individual step node (receives scrollYProgress as a prop) ────── */
 function StepNode({
-  step,
   index,
   scrollYProgress,
 }: {
-  step: (typeof HOW_IT_WORKS_STEPS)[number];
   index: number;
   scrollYProgress: import("framer-motion").MotionValue<number>;
 }) {
-  const Icon = step.icon;
+  const step = STEP_DATA[index];
+  const InfoGraphic = step.InfoGraphic;
 
-  // Map progress ranges per step: [fadeInStart, fullyVisibleStart]
   const ranges = [
     [0, 0.35],
     [0.25, 0.65],
@@ -209,6 +289,11 @@ function StepNode({
   );
   const dotText = useTransform(isActive, (a) => (a ? "#ffffff" : "#9ca3af"));
 
+  // 3D card variants
+  const cardScale = useTransform(isActive, (a) => (a ? 1.05 : 0.9));
+  const cardBlur = useTransform(isActive, (a) => (a ? "blur(0px)" : "blur(3px)"));
+  const cardY = useTransform(isActive, (a) => (a ? 0 : 20));
+
   return (
     <motion.div
       className="absolute z-10 flex items-start gap-5"
@@ -216,27 +301,46 @@ function StepNode({
     >
       {/* Dot marker on the SVG path */}
       <motion.div
-        className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 shadow-sm transition-shadow duration-300"
+        className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 shadow-sm"
         style={{ backgroundColor: dotBg, borderColor: dotBorder }}
       >
-        <motion.span
-          className="text-sm font-bold"
-          style={{ color: dotText }}
-        >
+        <motion.span className="text-sm font-bold" style={{ color: dotText }}>
           {index + 1}
         </motion.span>
       </motion.div>
 
-      {/* Card */}
-      <div className="max-w-xs rounded-2xl bg-white/90 p-5 shadow-lg backdrop-blur-sm ring-1 ring-gray-100">
-        <div className="mb-2 inline-flex rounded-lg bg-parkga-100 p-2">
-          <Icon className="h-5 w-5 text-parkga-600" />
+      {/* 3D Card with floating infographic */}
+      <motion.div
+        className="w-[85vw] sm:w-[450px] md:w-[500px] rounded-2xl bg-white/95 p-6 shadow-lg backdrop-blur-sm ring-1 ring-gray-100 transition-shadow duration-500"
+        style={{
+          scale: cardScale,
+          filter: cardBlur,
+          y: cardY,
+          boxShadow: useTransform(isActive, (a) =>
+            a
+              ? "0 0 60px -15px rgba(22,163,74,0.3), 0 20px 60px -15px rgba(0,0,0,0.15)"
+              : "0 4px 20px rgba(0,0,0,0.08)",
+          ),
+        }}
+      >
+        <div className="flex items-start gap-6">
+          {/* Text side */}
+          <div className="flex-1 min-w-0">
+            <div className="mb-3 inline-flex rounded-lg bg-parkga-100 p-2.5">
+              <step.icon className="h-5 w-5 text-parkga-600" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900">{step.title}</h3>
+            <p className="mt-2 text-sm leading-relaxed text-gray-500">
+              {step.description}
+            </p>
+          </div>
+
+          {/* Infographic side */}
+          <div className="hidden sm:flex items-center justify-center w-36 shrink-0">
+            <InfoGraphic />
+          </div>
         </div>
-        <h3 className="text-lg font-semibold text-gray-900">{step.title}</h3>
-        <p className="mt-1 text-sm leading-relaxed text-gray-500">
-          {step.description}
-        </p>
-      </div>
+      </motion.div>
     </motion.div>
   );
 }
@@ -257,6 +361,16 @@ function HowItWorksSection() {
   return (
     <section ref={containerRef} className="relative h-[300vh]">
       <div className="sticky top-0 flex h-screen items-center overflow-hidden bg-gradient-to-b from-white via-parkga-50/20 to-white">
+        {/* Dot pattern background */}
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.15]"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle, #16a34a 0.75px, transparent 0.75px)",
+            backgroundSize: "24px 24px",
+          }}
+        />
+
         {/* Title */}
         <div className="pointer-events-none absolute left-0 right-0 top-8 z-20 mx-auto w-full text-center">
           <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
@@ -267,13 +381,24 @@ function HowItWorksSection() {
           </p>
         </div>
 
-        {/* Full-screen SVG */}
+        {/* Full-screen SVG with glow filter */}
         <svg
           className="absolute inset-0 h-full w-full"
           viewBox="0 0 1200 900"
           preserveAspectRatio="xMidYMid meet"
           style={{ pointerEvents: "none" }}
         >
+          <defs>
+            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="6" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+
           {/* Grey background path */}
           <path
             d={SVG_PATH}
@@ -282,28 +407,28 @@ function HowItWorksSection() {
             fill="none"
             strokeLinecap="round"
           />
-          {/* Animated green path */}
+          {/* Glowing green laser path */}
           <motion.path
             d={SVG_PATH}
             stroke="#16a34a"
             strokeWidth="4"
             fill="none"
             strokeLinecap="round"
+            filter="url(#glow)"
             style={{ pathLength: scrollYProgress }}
           />
         </svg>
 
         {/* Step nodes */}
-        {HOW_IT_WORKS_STEPS.map((step, i) => (
+        {STEP_DATA.map((_, i) => (
           <StepNode
-            key={step.title}
-            step={step}
+            key={STEP_DATA[i].title}
             index={i}
             scrollYProgress={scrollYProgress}
           />
         ))}
 
-        {/* Scroll hint (fades after user starts scrolling) */}
+        {/* Scroll hint */}
         <motion.div
           className="absolute bottom-6 left-1/2 z-20 -translate-x-1/2"
           style={{ opacity: scrollHintOpacity }}
