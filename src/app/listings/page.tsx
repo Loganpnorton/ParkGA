@@ -86,7 +86,7 @@ function SpotHeroPopupCard({
   const priceLabel = spot.price_per_hour ? "/hr" : "/event";
 
   return (
-    <div className="w-72 overflow-hidden rounded-xl bg-gray-900 text-white shadow-2xl">
+    <div className="w-72 overflow-hidden rounded-xl border border-gray-200 bg-white text-gray-900 shadow-2xl">
       {/* ── Image section ───────────────────────────────────────────── */}
       <div className="relative h-40 w-full">
         {images.length > 0 ? (
@@ -96,8 +96,8 @@ function SpotHeroPopupCard({
             className="h-full w-full object-cover"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gray-800">
-            <Car className="h-10 w-10 text-gray-500" />
+          <div className="flex h-full w-full items-center justify-center bg-gray-100">
+            <Car className="h-10 w-10 text-gray-300" />
           </div>
         )}
 
@@ -105,7 +105,7 @@ function SpotHeroPopupCard({
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white/90 transition-colors hover:bg-black/70"
+          className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 text-gray-600 shadow transition-colors hover:bg-white hover:text-gray-900"
           aria-label="Close"
         >
           <X className="h-4 w-4" />
@@ -117,7 +117,7 @@ function SpotHeroPopupCard({
             <button
               type="button"
               onClick={prevImage}
-              className="absolute left-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white/90 transition-colors hover:bg-black/70"
+              className="absolute left-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-gray-600 shadow transition-colors hover:bg-white hover:text-gray-900"
               aria-label="Previous image"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -125,7 +125,7 @@ function SpotHeroPopupCard({
             <button
               type="button"
               onClick={nextImage}
-              className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white/90 transition-colors hover:bg-black/70"
+              className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-gray-600 shadow transition-colors hover:bg-white hover:text-gray-900"
               aria-label="Next image"
             >
               <ChevronRight className="h-4 w-4" />
@@ -145,17 +145,17 @@ function SpotHeroPopupCard({
       <div className="flex flex-col gap-2 p-4">
         {/* Row 1 — Title + Price */}
         <div className="flex items-start justify-between gap-2">
-          <h3 className="truncate text-lg font-bold leading-tight">
+          <h3 className="truncate text-lg font-bold leading-tight text-gray-900">
             {spot.title}
           </h3>
-          <span className="shrink-0 text-xl font-bold">
+          <span className="shrink-0 text-xl font-bold text-gray-900">
             ${price}
           </span>
         </div>
 
         {/* Row 2 — Walking distance + Subtotal /hr */}
         <div className="flex items-center justify-between text-sm">
-          <div className="flex items-center gap-1.5 text-gray-300">
+          <div className="flex items-center gap-1.5 text-gray-500">
             <PersonStanding className="h-4 w-4" />
             <span>10 min (0.5 mi)</span>
           </div>
@@ -164,7 +164,7 @@ function SpotHeroPopupCard({
 
         {/* Row 3 — Rating + Book Now */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1 text-sm text-gray-300">
+          <div className="flex items-center gap-1 text-sm text-gray-500">
             <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
             <span>4.5 (12)</span>
           </div>

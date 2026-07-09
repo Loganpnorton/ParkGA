@@ -22,8 +22,9 @@
 
 /*
  * ── SpotHero-style Mapbox Popup Overrides ──────────────────────────────
- * Strip all default Mapbox popup chrome so our custom Tailwind card
- * renders edge-to-edge inside the popup container.
+ * Strip default padding/background/shadow so our custom Tailwind card
+ * renders edge-to-edge. The popup tip matches the card's bottom (white)
+ * to act as a speech-bubble arrow pointing at the spot.
  */
 .mapboxgl-popup-content {
   padding: 0 !important;
@@ -33,8 +34,10 @@
   overflow: hidden !important;
 }
 
+/* Speech-bubble tip — white to match the card's bottom details section */
 .mapboxgl-popup-tip {
-  display: none !important;
+  display: block !important;
+  border-top-color: #ffffff !important;
 }
 
 .mapboxgl-popup {
