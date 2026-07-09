@@ -367,7 +367,7 @@ export default function HomePage() {
               return (
                 <div
                   key={feature.title}
-                  className="rounded-xl border border-gray-200 p-6 transition-shadow hover:shadow-md"
+                  className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-green-500 hover:shadow-lg"
                 >
                   <div className="inline-flex rounded-lg bg-parkga-100 p-3">
                     <Icon className="h-6 w-6 text-parkga-600" />
@@ -385,7 +385,54 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── CTA Section ──────────────────────────────────────────────── */}
+      {/* ── Host Spotlight Section ──────────────────────────────────────── */}
+      <section className="bg-slate-900 py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col items-center gap-12 md:flex-row">
+            {/* Left — Image */}
+            <div className="w-full md:w-1/2">
+              <div
+                className="aspect-[4/3] w-full rounded-2xl bg-cover bg-center shadow-xl"
+                style={{
+                  backgroundImage:
+                    "url('https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&q=80')",
+                }}
+              />
+            </div>
+
+            {/* Right — Content */}
+            <div className="w-full text-center md:w-1/2 md:text-left">
+              <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
+                Your Driveway.
+                <span className="block text-parkga-400">Their Parking Spot.</span>
+              </h2>
+              <p className="mt-6 text-lg leading-8 text-slate-300">
+                Unlike corporate garages, ParkGA is built by locals, for locals.
+                Turn your empty driveway into passive income during game days and
+                local events. We handle the payments, you keep the profits.
+              </p>
+              <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row md:justify-start">
+                <a
+                  href="/host/new"
+                  className="inline-flex items-center gap-2 rounded-xl bg-parkga-600 px-8 py-4 text-base font-semibold text-white shadow-lg transition-all duration-300 hover:bg-parkga-500 hover:shadow-xl active:scale-95"
+                >
+                  Start Earning Today
+                  <span aria-hidden="true" className="text-lg">&rarr;</span>
+                </a>
+                <a
+                  href="/listings"
+                  className="inline-flex items-center gap-1 text-sm font-medium text-slate-400 transition-colors hover:text-white"
+                >
+                  Browse parking spots
+                  <span aria-hidden="true">&rarr;</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Final CTA Section ───────────────────────────────────────────── */}
       <section className="bg-parkga-600 py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
