@@ -185,12 +185,10 @@ function AccordionCard({
 
 function PaymentFormContent({
   booking,
-  onSuccess,
-  onComplete,
+  onPaymentComplete,
 }: {
   booking: BookingWithSpot;
-  onSuccess: () => void;
-  onComplete: () => void;
+  onPaymentComplete: () => void;
 }) {
   const stripe = useStripe();
   const elements = useElements();
@@ -228,8 +226,8 @@ function PaymentFormContent({
     }
 
     // Payment succeeded without redirect (e.g., plain card payment)
-    onComplete();
-    onSuccess();
+    // Advance to vehicle details instead of redirecting
+    onPaymentComplete();
   }
 
   return (
@@ -502,29 +500,41 @@ export default function CheckoutPage() {
     setOpenSection("payment");
   }
 
-  // ── Handle successful payment ───────────────────────────────────────
-  function handlePaymentSuccess() {
-    toast.success("Booking confirmed! 🎉", {
-      description:
-        "Your parking spot has been reserved. Check your dashboard for details.",
-      duration: 5000,
+  // ── Handle successful payment (advance to vehicle, don't redirect) ─
+  function handlePaymentComplete() {
+    setPaymentComplete(true);
+    setOpenSection("vehicle");
+    toast.success("Payment successful! 🎉", {
+      description: "Add your vehicle details or continue to dashboard.",
+      duration: 4000,
     });
+  }
+
+  // ── Final redirect to dashboard ─────────────────────────────────────
+  function goToDashboard() {
     router.push("/dashboard");
   }
 
   // ── Handle vehicle save ─────────────────────────────────────────────
   function handleVehicleSave() {
     setVehicleComplete(true);
-    setOpenSection("contact"); // collapse vehicle, user can review
+    toast.success("Booking confirmed! 🎉", {
+      description:
+        "Your parking spot has been reserved. Check your dashboard for details.",
+      duration: 5000,
+    });
+    goToDashboard();
   }
 
-  // ── Handle "Pay & Complete" from vehicle (skipping vehicle) ─────────
+  // ── Handle skip vehicle ─────────────────────────────────────────────
   function handleSkipVehicle() {
     setVehicleComplete(true);
-    // If payment already complete, just stay here
-    if (paymentComplete) {
-      handlePaymentSuccess();
-    }
+    toast.success("Booking confirmed! 🎉", {
+      description:
+        "Your parking spot has been reserved. Check your dashboard for details.",
+      duration: 5000,
+    });
+    goToDashboard();
   }
 
   // ── Loading state ───────────────────────────────────────────────────
@@ -743,11 +753,7 @@ export default function CheckoutPage() {
                   >
                     <PaymentFormContent
                       booking={booking!}
-                      onSuccess={handlePaymentSuccess}
-                      onComplete={() => {
-                        setPaymentComplete(true);
-                        setOpenSection("vehicle");
-                      }}
+                      onPaymentComplete={handlePaymentComplete}
                     />
                   </Elements>
                 ) : (
