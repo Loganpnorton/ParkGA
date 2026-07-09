@@ -25,19 +25,8 @@ const STEPS = [
   },
 ] as const;
 
-/* ── Perfect S-Curve (viewBox 0 0 100 100) ──────────────────────────────── */
-const SVG_PATH = "M 35 15 C 80 15, 85 30, 85 50 C 85 70, 35 70, 35 85";
-
-/* ── Card Positions (% on the Relative Canvas) ──────────────────────────── */
-const CARD_POSITIONS: {
-  top: string;
-  left?: string;
-  right?: string;
-}[] = [
-  { top: "5%", left: "5%" },    // Step 1 — top-left, in negative space left of curve
-  { top: "42%", right: "5%" },  // Step 2 — middle-right, in negative space right of curve
-  { top: "78%", left: "5%" },   // Step 3 — bottom-left, in negative space left of curve
-];
+/* ── Complex Elongated S-Curve (viewBox 0 0 100 200) ──────────────────── */
+const SVG_PATH = "M 20 10 C 20 70, 80 50, 80 100 C 80 150, 20 130, 20 190";
 
 /* ── Spring Image Variants ──────────────────────────────────────────────── */
 const IMAGE_VARIANTS = {
@@ -67,20 +56,21 @@ function StepCard({
   index: number;
   isActive: boolean;
 }) {
-  const pos = CARD_POSITIONS[index];
+  const positionClasses = [
+    "absolute top-[5%] left-[30%] -translate-y-1/2 z-20",
+    "absolute top-[50%] right-[30%] -translate-y-1/2 z-20",
+    "absolute top-[95%] left-[30%] -translate-y-1/2 z-20",
+  ][index];
 
   return (
     <motion.div
-      className="absolute flex items-center gap-5 rounded-2xl border border-gray-100 bg-white/80 p-5 shadow-xl backdrop-blur-md sm:gap-6 sm:p-6"
+      className={`${positionClasses} flex items-center gap-5 rounded-2xl border border-gray-100 bg-white/80 p-5 shadow-xl backdrop-blur-md sm:gap-6 sm:p-6`}
       style={{
-        top: pos.top,
-        left: (pos.left as string | undefined) ?? "auto",
-        right: (pos.right as string | undefined) ?? "auto",
-        width: "clamp(220px, 38vw, 340px)",
+        width: "clamp(240px, 36vw, 340px)",
       }}
       animate={{
-        opacity: isActive ? 1 : 0.45,
-        scale: isActive ? 1 : 0.95,
+        opacity: isActive ? 1 : 0.35,
+        scale: isActive ? 1 : 0.92,
       }}
       transition={{ type: "spring", bounce: 0.3, duration: 0.6 }}
     >
@@ -88,7 +78,7 @@ function StepCard({
       <motion.img
         src={step.image}
         alt={step.title}
-        className="h-24 w-24 shrink-0 object-contain drop-shadow-[0_20px_20px_rgba(0,0,0,0.25)] md:h-32 md:w-32"
+        className="h-24 w-24 shrink-0 object-contain drop-shadow-2xl md:h-32 md:w-32"
         variants={IMAGE_VARIANTS}
         animate={isActive ? "active" : "inactive"}
       />
@@ -145,7 +135,7 @@ export default function HowItWorks() {
         />
 
         {/* Title */}
-        <div className="pointer-events-none absolute left-0 right-0 top-8 z-20 mx-auto w-full text-center">
+        <div className="pointer-events-none absolute left-0 right-0 top-8 z-30 mx-auto w-full text-center">
           <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
             How It Works
           </h2>
@@ -154,40 +144,45 @@ export default function HowItWorks() {
           </p>
         </div>
 
-        {/* ── Relative Canvas ──────────────────────────────────────────── */}
-        <div className="relative w-full max-w-5xl aspect-[3/4] md:aspect-video">
-          {/* SVG Winding Line */}
+        {/* ── Tall Relative Canvas ─────────────────────────────────────── */}
+        <div className="relative mx-auto w-full max-w-5xl h-[800px] md:h-[1200px]">
+          {/* SVG Elongated S-Curve */}
           <svg
             className="absolute inset-0 h-full w-full"
-            viewBox="0 0 100 100"
+            viewBox="0 0 100 200"
             preserveAspectRatio="none"
             style={{ pointerEvents: "none" }}
           >
             <defs>
-              <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur stdDeviation="1.5" result="blur" />
+              <filter
+                id="glow"
+                x="-20%"
+                y="-20%"
+                width="140%"
+                height="140%"
+              >
+                <feGaussianBlur stdDeviation="1" result="blur" />
                 <feMerge>
-                  <feMergeNode in="blur" />
                   <feMergeNode in="blur" />
                   <feMergeNode in="SourceGraphic" />
                 </feMerge>
               </filter>
             </defs>
 
-            {/* Grey background path */}
+            {/* Grey background path — thin, elegant */}
             <path
               d={SVG_PATH}
               stroke="#e5e7eb"
-              strokeWidth="2"
+              strokeWidth={1}
               fill="none"
               strokeLinecap="round"
             />
 
-            {/* Animated green path (draws itself on scroll) */}
+            {/* Animated green path — sleek laser */}
             <motion.path
               d={SVG_PATH}
               stroke="#16a34a"
-              strokeWidth="2"
+              strokeWidth={2}
               fill="none"
               strokeLinecap="round"
               filter="url(#glow)"
@@ -195,7 +190,7 @@ export default function HowItWorks() {
             />
           </svg>
 
-          {/* Step Cards */}
+          {/* Step Cards — anchored with translate-y to sit centered beside the curve */}
           {STEPS.map((step, i) => (
             <StepCard
               key={step.title}
