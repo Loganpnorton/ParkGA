@@ -3,13 +3,20 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { loadStripe, StripeElementsOptions } from "@stripe/stripe-js";
-import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import {
+  Elements,
+  PaymentElement,
+  useStripe,
+  useElements,
+} from "@stripe/react-stripe-js";
 import { createClient } from "@/lib/supabase/client";
+import { toast } from "sonner";
 import {
   Loader2,
   Check,
-  ArrowLeft,
+  ChevronLeft,
   AlertCircle,
   CreditCard,
   MapPin,
@@ -17,14 +24,22 @@ import {
   Clock,
   DollarSign,
   Shield,
+  Mail,
+  Phone,
+  Car,
+  Star,
+  ChevronDown,
+  ChevronRight,
+  XCircle,
 } from "lucide-react";
 
-const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? "";
+const stripePublishableKey =
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? "";
 const stripePromise = loadStripe(stripePublishableKey);
-
 const supabase = createClient();
 
 // ─── Types ─────────────────────────────────────────────────────────────
+
 interface BookingWithSpot {
   id: string;
   spot_id: string;
@@ -44,9 +59,18 @@ interface SpotInfo {
   price_per_hour: number | null;
   price_per_event: number | null;
   images: string[];
+  host_id: string;
+}
+
+interface UserProfile {
+  id: string;
+  email: string;
+  name: string | null;
+  phone: string | null;
 }
 
 // ─── Formatting helpers ────────────────────────────────────────────────
+
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString("en-US", {
     weekday: "short",
@@ -70,16 +94,78 @@ function getDuration(start: string, end: string): string {
   return `${hrs.toFixed(1)} hrs`;
 }
 
-// ─── Checkout Form ─────────────────────────────────────────────────────
-function CheckoutForm({
+function getCancelDate(endTime: string): string {
+  const d = new Date(endTime);
+  d.setDate(d.getDate() - 1);
+  return formatDate(d.toISOString());
+}
+
+// ─── Accordion Section Wrapper ─────────────────────────────────────────
+
+function AccordionCard({
+  step,
+  title,
+  isOpen,
+  onToggle,
+  isComplete,
+  children,
+}: {
+  step: number;
+  title: string;
+  isOpen: boolean;
+  onToggle: () => void;
+  isComplete: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex w-full items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-gray-50/50"
+      >
+        {/* Step number */}
+        <span
+          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+            isComplete
+              ? "bg-green-600 text-white"
+              : isOpen
+                ? "bg-parkga-600 text-white"
+                : "bg-gray-200 text-gray-500"
+          }`}
+        >
+          {isComplete ? <Check className="h-3.5 w-3.5" /> : step}
+        </span>
+
+        {/* Title */}
+        <span
+          className={`flex-1 text-sm font-semibold ${
+            isComplete ? "text-green-700" : "text-gray-900"
+          }`}
+        >
+          {title}
+        </span>
+
+        {/* Chevron */}
+        {isOpen ? (
+          <ChevronDown className="h-4 w-4 text-gray-400" />
+        ) : (
+          <ChevronRight className="h-4 w-4 text-gray-400" />
+        )}
+      </button>
+
+      {isOpen && <div className="border-t border-gray-100 px-5 py-4">{children}</div>}
+    </div>
+  );
+}
+
+// ─── Payment Form ──────────────────────────────────────────────────────
+
+function PaymentFormContent({
   booking,
-  spot,
-  clientSecret,
   onSuccess,
 }: {
   booking: BookingWithSpot;
-  spot: SpotInfo;
-  clientSecret: string;
   onSuccess: () => void;
 }) {
   const stripe = useStripe();
@@ -95,7 +181,15 @@ function CheckoutForm({
     setProcessing(true);
     setError(null);
 
-    const { error: submitError } = await stripe.confirmPayment({
+    // Submit the elements (triggers validation, shows wallet sheets)
+    const { error: submitError } = await elements.submit();
+    if (submitError) {
+      setError(submitError.message ?? "Please check your payment details.");
+      setProcessing(false);
+      return;
+    }
+
+    const { error: confirmError } = await stripe.confirmPayment({
       elements,
       confirmParams: {
         return_url: `${window.location.origin}/checkout/${booking.id}/success`,
@@ -103,31 +197,39 @@ function CheckoutForm({
       redirect: "if_required",
     });
 
-    if (submitError) {
-      setError(submitError.message ?? "Payment failed. Please try again.");
+    if (confirmError) {
+      setError(confirmError.message ?? "Payment failed. Please try again.");
       setProcessing(false);
       return;
     }
 
-    // If redirect: "if_required" and no error, payment succeeded without redirect
+    // Payment succeeded without redirect (e.g., plain card payment)
     onSuccess();
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <PaymentElement />
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <PaymentElement
+        options={{
+          layout: {
+            type: "accordion",
+            defaultCollapsed: false,
+            spacedAccordionItems: true,
+          },
+        }}
+      />
 
       {error && (
-        <div className="flex items-center gap-1.5 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
-          <AlertCircle className="h-4 w-4 shrink-0" />
-          {error}
+        <div className="flex items-start gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>{error}</span>
         </div>
       )}
 
       <button
         type="submit"
         disabled={!stripe || processing}
-        className="flex w-full items-center justify-center gap-2 rounded-lg bg-parkga-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-parkga-700 disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {processing ? (
           <>
@@ -136,21 +238,59 @@ function CheckoutForm({
           </>
         ) : (
           <>
-            <CreditCard className="h-4 w-4" />
-            Pay ${booking.total_price.toFixed(2)}
+            <LockIcon className="h-4 w-4" />
+            Confirm & Pay — ${booking.total_price.toFixed(2)}
           </>
         )}
       </button>
 
-      <p className="flex items-center justify-center gap-1 text-center text-xs text-gray-400">
+      <div className="flex items-center justify-center gap-1.5 text-xs text-gray-400">
         <Shield className="h-3 w-3" />
-        Secured by Stripe
-      </p>
+        <span>Payments are secured and encrypted by Stripe</span>
+      </div>
     </form>
   );
 }
 
+function LockIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </svg>
+  );
+}
+
+// ─── Star Rating Display ───────────────────────────────────────────────
+
+function StarRatingDisplay({ rating }: { rating: number }) {
+  return (
+    <div className="flex items-center gap-0.5">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <Star
+          key={star}
+          className={`h-3 w-3 ${
+            star <= rating
+              ? "fill-amber-400 text-amber-400"
+              : "text-gray-300"
+          }`}
+        />
+      ))}
+    </div>
+  );
+}
+
 // ─── Main Checkout Page ────────────────────────────────────────────────
+
 export default function CheckoutPage() {
   const params = useParams();
   const router = useRouter();
@@ -160,10 +300,18 @@ export default function CheckoutPage() {
   const [error, setError] = useState<string | null>(null);
   const [booking, setBooking] = useState<BookingWithSpot | null>(null);
   const [spot, setSpot] = useState<SpotInfo | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [avgRating, setAvgRating] = useState<number | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paid, setPaid] = useState(false);
 
+  // Accordion state — start with payment section open
+  const [openSection, setOpenSection] = useState<"contact" | "payment" | "vehicle">("payment");
+
+  // ── Initialization ──────────────────────────────────────────────────
   useEffect(() => {
+    let cancelled = false;
+
     async function init() {
       if (!bookingId) return;
 
@@ -176,7 +324,14 @@ export default function CheckoutPage() {
         return;
       }
 
-      // 2. Fetch booking
+      // 2. Fetch profile (name, phone)
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("id, name, phone")
+        .eq("id", user.id)
+        .single();
+
+      // 3. Fetch booking
       const { data: bookingData, error: bookingError } = await supabase
         .from("bookings")
         .select("*")
@@ -207,20 +362,41 @@ export default function CheckoutPage() {
         return;
       }
 
-      setBooking(bookingData as BookingWithSpot);
+      if (!cancelled) {
+        setBooking(bookingData as BookingWithSpot);
+        setProfile({
+          id: user.id,
+          email: user.email ?? "",
+          name: profileData?.name ?? null,
+          phone: profileData?.phone ?? null,
+        });
+      }
 
-      // 3. Fetch spot details
+      // 4. Fetch spot details
       const { data: spotData } = await supabase
         .from("spots")
-        .select("id, title, address, price_per_hour, price_per_event, images")
+        .select("id, title, address, price_per_hour, price_per_event, images, host_id")
         .eq("id", bookingData.spot_id)
         .single();
 
-      if (spotData) {
+      if (spotData && !cancelled) {
         setSpot(spotData as SpotInfo);
+
+        // Fetch average rating
+        const { data: reviewsData } = await supabase
+          .from("reviews")
+          .select("rating")
+          .eq("spot_id", spotData.id);
+
+        if (reviewsData && reviewsData.length > 0) {
+          const avg =
+            reviewsData.reduce((sum, r) => sum + r.rating, 0) /
+            reviewsData.length;
+          setAvgRating(Math.round(avg * 10) / 10);
+        }
       }
 
-      // 4. Create PaymentIntent
+      // 5. Create PaymentIntent
       try {
         const res = await fetch("/api/stripe/create-payment-intent", {
           method: "POST",
@@ -236,18 +412,30 @@ export default function CheckoutPage() {
           return;
         }
 
-        setClientSecret(data.client_secret);
+        if (!cancelled) setClientSecret(data.client_secret);
       } catch {
-        setError("Network error. Please try again.");
+        if (!cancelled) setError("Network error. Please try again.");
       }
 
-      setLoading(false);
+      if (!cancelled) setLoading(false);
     }
 
     init();
+    return () => {
+      cancelled = true;
+    };
   }, [bookingId, router]);
 
-  // ── Loading state ──────────────────────────────────────────────────
+  // ── Handle successful payment ───────────────────────────────────────
+  function handlePaymentSuccess() {
+    toast.success("Booking confirmed! 🎉", {
+      description: "Your parking spot has been reserved. Check your dashboard for details.",
+      duration: 5000,
+    });
+    router.push("/dashboard");
+  }
+
+  // ── Loading state ───────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
@@ -256,16 +444,22 @@ export default function CheckoutPage() {
     );
   }
 
-  // ── Error state ────────────────────────────────────────────────────
+  // ── Error state ─────────────────────────────────────────────────────
   if (error) {
     return (
-      <div className="flex h-[calc(100vh-4rem)] flex-col items-center justify-center px-4">
-        <AlertCircle className="h-12 w-12 text-red-400" />
-        <h1 className="mt-4 text-xl font-bold text-gray-900">Something went wrong</h1>
-        <p className="mt-2 text-sm text-gray-500">{error}</p>
+      <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center px-4">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
+          <XCircle className="h-8 w-8 text-red-500" />
+        </div>
+        <h1 className="mt-4 text-xl font-bold text-gray-900">
+          Something went wrong
+        </h1>
+        <p className="mt-2 max-w-sm text-center text-sm text-gray-500">
+          {error}
+        </p>
         <Link
           href="/listings"
-          className="mt-6 rounded-lg bg-parkga-600 px-6 py-2.5 text-sm font-semibold text-white"
+          className="mt-6 rounded-lg bg-parkga-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-parkga-700"
         >
           Browse spots
         </Link>
@@ -273,30 +467,31 @@ export default function CheckoutPage() {
     );
   }
 
-  // ── Success / Already paid ─────────────────────────────────────────
+  // ── Already paid ────────────────────────────────────────────────────
   if (paid) {
     return (
       <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-12">
         <div className="w-full max-w-md text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-parkga-100">
-            <Check className="h-8 w-8 text-parkga-600" />
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+            <Check className="h-8 w-8 text-green-600" />
           </div>
           <h1 className="mt-6 text-3xl font-bold tracking-tight text-gray-900">
-            Payment Successful!
+            Already Confirmed!
           </h1>
           <p className="mt-3 text-sm text-gray-600">
-            Your booking has been confirmed. Check your dashboard for details.
+            This booking has already been paid and confirmed. Check your
+            dashboard for details.
           </p>
           <div className="mt-8 flex items-center justify-center gap-4">
             <Link
               href="/dashboard"
-              className="rounded-lg bg-parkga-600 px-6 py-2.5 text-sm font-semibold text-white"
+              className="rounded-lg bg-parkga-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-parkga-700"
             >
               Go to Dashboard
             </Link>
             <Link
               href="/listings"
-              className="rounded-lg border border-gray-300 px-6 py-2.5 text-sm font-semibold text-gray-700"
+              className="rounded-lg border border-gray-300 px-6 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
             >
               Browse spots
             </Link>
@@ -306,129 +501,318 @@ export default function CheckoutPage() {
     );
   }
 
-  // ── Render checkout ────────────────────────────────────────────────
+  // ── Render Split-Screen Checkout ────────────────────────────────────
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
-      {/* Back link */}
-      <Link
-        href={`/listings/${booking?.spot_id}`}
-        className="mb-6 inline-flex items-center gap-1 text-sm font-medium text-gray-500 hover:text-parkga-600"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Back to listing
-      </Link>
-
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-5">
-        {/* ── Left: Payment form ───────────────────────────────────── */}
-        <div className="md:col-span-3">
-          <h1 className="text-2xl font-bold text-gray-900">Complete your booking</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Enter your payment details to confirm this parking spot.
-          </p>
-
-          <div className="mt-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            {clientSecret && stripePublishableKey ? (
-              <Elements
-                stripe={stripePromise}
-                options={{
-                  clientSecret,
-                  appearance: {
-                    theme: "stripe",
-                    variables: {
-                      colorPrimary: "#16a34a",
-                      colorBackground: "#ffffff",
-                      colorText: "#111827",
-                      fontFamily: "Inter, system-ui, sans-serif",
-                    },
-                  },
-                } as StripeElementsOptions}
-              >
-                <CheckoutForm
-                  booking={booking!}
-                  spot={spot!}
-                  clientSecret={clientSecret}
-                  onSuccess={() => setPaid(true)}
-                />
-              </Elements>
-            ) : (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-parkga-600" />
-              </div>
-            )}
-          </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Thin top bar */}
+      <div className="border-b border-gray-200 bg-white">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
+          <Link
+            href={`/listings/${booking?.spot_id}`}
+            className="inline-flex items-center gap-1 text-sm font-medium text-gray-500 hover:text-parkga-600 transition-colors"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Back
+          </Link>
+          <span className="text-sm font-semibold text-gray-900">Checkout</span>
+          <div className="w-14" /> {/* spacer */}
         </div>
+      </div>
 
-        {/* ── Right: Booking summary ───────────────────────────────── */}
-        <div className="md:col-span-2">
-          <div className="sticky top-24 space-y-4">
-            <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-              <h3 className="text-sm font-semibold text-gray-900">Booking Summary</h3>
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:py-10">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-5">
+          {/* ═══ LEFT COLUMN: Accordion Flow ═══ */}
+          <div className="space-y-4 lg:col-span-3">
+            <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">
+              Complete your booking
+            </h1>
+            <p className="text-sm text-gray-500">
+              Review your details and confirm your parking spot.
+            </p>
 
-              {spot && (
-                <div className="mt-4 flex items-start gap-3">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gray-100">
-                    {spot.images && spot.images.length > 0 ? (
-                      <img
-                        src={spot.images[0]}
-                        alt={spot.title}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <MapPin className="h-5 w-5 text-gray-400" />
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 truncate">
-                      {spot.title}
-                    </p>
-                    <p className="text-xs text-gray-500 truncate">{spot.address}</p>
-                  </div>
-                </div>
-              )}
-
-              {booking && (
-                <div className="mt-5 space-y-3 border-t border-gray-100 pt-4">
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Calendar className="h-4 w-4 text-gray-400" />
-                    <span>{formatDate(booking.start_time)}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Clock className="h-4 w-4 text-gray-400" />
-                    <span>
-                      {formatTime(booking.start_time)} – {formatTime(booking.end_time)}
-                    </span>
-                  </div>
-                  {spot && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Clock className="h-4 w-4 text-gray-400" />
-                      <span>{getDuration(booking.start_time, booking.end_time)}</span>
+            <div className="mt-6 space-y-3">
+              {/* ── 1. Contact Info Card ───────────────────────────── */}
+              <AccordionCard
+                step={1}
+                title="Contact info"
+                isOpen={openSection === "contact"}
+                onToggle={() =>
+                  setOpenSection(openSection === "contact" ? "payment" : "contact")
+                }
+                isComplete={false}
+              >
+                <div className="space-y-4">
+                  {/* Email */}
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50">
+                      <Mail className="h-4 w-4 text-blue-600" />
                     </div>
-                  )}
-                </div>
-              )}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-medium text-gray-500">
+                        Email address
+                      </p>
+                      <p className="mt-0.5 text-sm font-medium text-gray-900">
+                        {profile?.email ?? "—"}
+                      </p>
+                    </div>
+                  </div>
 
-              <div className="mt-5 space-y-2 border-t border-gray-100 pt-4">
-                <div className="flex justify-between text-sm text-gray-600">
-                  <span>Subtotal</span>
-                  <span>${booking?.total_price.toFixed(2)}</span>
+                  {/* Phone */}
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50">
+                      <Phone className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-medium text-gray-500">
+                        Phone number
+                      </p>
+                      <p className="mt-0.5 text-sm font-medium text-gray-900">
+                        {profile?.phone ?? "—"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* SMS reminder note */}
+                  <div className="rounded-lg bg-blue-50 px-3 py-2.5">
+                    <p className="text-xs text-blue-700">
+                      <span className="font-medium">SMS reminders:</span> We'll
+                      send you a text reminder before your reservation starts.
+                      Manage notification preferences in your dashboard.
+                    </p>
+                  </div>
                 </div>
-                <div className="flex justify-between text-sm text-gray-400">
-                  <span>Service fee</span>
-                  <span>Included</span>
+              </AccordionCard>
+
+              {/* ── 2. Payment Method Card ──────────────────────────── */}
+              <AccordionCard
+                step={2}
+                title="Payment method"
+                isOpen={openSection === "payment"}
+                onToggle={() =>
+                  setOpenSection(openSection === "payment" ? "vehicle" : "payment")
+                }
+                isComplete={false}
+              >
+                {clientSecret && stripePublishableKey ? (
+                  <Elements
+                    stripe={stripePromise}
+                    options={
+                      {
+                        clientSecret,
+                        appearance: {
+                          theme: "stripe",
+                          variables: {
+                            colorPrimary: "#2563eb",
+                            colorBackground: "#ffffff",
+                            colorText: "#111827",
+                            colorDanger: "#dc2626",
+                            fontFamily:
+                              'Inter, ui-sans-serif, system-ui, sans-serif',
+                            borderRadius: "8px",
+                            spacingUnit: "4px",
+                          },
+                          rules: {
+                            ".Input": {
+                              border: "1px solid #d1d5db",
+                              boxShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+                            },
+                            ".Input:focus": {
+                              border: "1px solid #2563eb",
+                              boxShadow: "0 0 0 3px rgba(37, 99, 235, 0.1)",
+                            },
+                            ".Label": {
+                              fontSize: "13px",
+                              fontWeight: "500",
+                              color: "#374151",
+                            },
+                          },
+                        },
+                      } as StripeElementsOptions
+                    }
+                  >
+                    <PaymentFormContent
+                      booking={booking!}
+                      onSuccess={handlePaymentSuccess}
+                    />
+                  </Elements>
+                ) : (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-parkga-600" />
+                  </div>
+                )}
+              </AccordionCard>
+
+              {/* ── 3. Vehicle Info Card (Placeholder) ──────────────── */}
+              <AccordionCard
+                step={3}
+                title="Vehicle details"
+                isOpen={openSection === "vehicle"}
+                onToggle={() =>
+                  setOpenSection(openSection === "vehicle" ? "payment" : "vehicle")
+                }
+                isComplete={false}
+              >
+                <div className="flex flex-col items-center gap-3 py-4 text-center">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
+                    <Car className="h-6 w-6 text-gray-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">
+                      Vehicle Details (Optional)
+                    </p>
+                    <p className="mt-1 text-xs text-gray-500">
+                      Add your vehicle information to help the host identify
+                      your car upon arrival. Available in your dashboard after
+                      booking.
+                    </p>
+                  </div>
                 </div>
-                <div className="flex justify-between border-t border-gray-100 pt-2 text-base font-bold text-gray-900">
-                  <span>Total</span>
-                  <span>${booking?.total_price.toFixed(2)}</span>
-                </div>
-              </div>
+              </AccordionCard>
             </div>
 
-            <div className="flex items-center gap-2 rounded-xl bg-blue-50 px-4 py-3">
-              <Shield className="h-4 w-4 shrink-0 text-blue-600" />
-              <p className="text-xs text-blue-700">
-                Your payment is processed securely via Stripe. Your card details are never
-                stored on our servers.
+            {/* Security badge */}
+            <div className="flex items-center justify-center gap-2 rounded-xl bg-white border border-gray-200 px-4 py-3 shadow-sm">
+              <Shield className="h-4 w-4 shrink-0 text-green-600" />
+              <p className="text-xs text-gray-600">
+                Your payment information is processed securely via{" "}
+                <span className="font-semibold">Stripe</span>. We never store
+                your full card details.
               </p>
+            </div>
+          </div>
+
+          {/* ═══ RIGHT COLUMN: Sticky Order Summary ═══ */}
+          <div className="lg:col-span-2">
+            <div className="sticky top-24 space-y-4">
+              {/* Order Summary Card */}
+              <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+                {/* Spot image */}
+                {spot && spot.images && spot.images.length > 0 && (
+                  <div className="relative h-40 w-full overflow-hidden bg-gray-100">
+                    <Image
+                      src={spot.images[0]}
+                      alt={spot.title}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                )}
+
+                <div className="p-5">
+                  {/* Spot Title */}
+                  <h3 className="text-base font-bold text-gray-900">
+                    {spot?.title ?? "Parking Spot"}
+                  </h3>
+
+                  {/* Star Rating */}
+                  {avgRating !== null && (
+                    <div className="mt-1.5 flex items-center gap-2">
+                      <StarRatingDisplay rating={Math.round(avgRating)} />
+                      <span className="text-xs text-gray-500">
+                        {avgRating}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Address */}
+                  {spot && (
+                    <p className="mt-2 flex items-center gap-1 text-xs text-gray-500">
+                      <MapPin className="h-3 w-3 shrink-0" />
+                      <span className="truncate">{spot.address}</span>
+                    </p>
+                  )}
+
+                  {/* Reservation Period */}
+                  {booking && (
+                    <div className="mt-4 space-y-2 rounded-lg bg-gray-50 p-3">
+                      <div className="flex items-center gap-2 text-xs text-gray-600">
+                        <Calendar className="h-3.5 w-3.5 text-gray-400" />
+                        <span>
+                          <span className="font-medium text-gray-900">
+                            {formatDate(booking.start_time)}
+                          </span>
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-gray-600">
+                        <Clock className="h-3.5 w-3.5 text-gray-400" />
+                        <span>
+                          <span className="font-medium text-gray-900">
+                            {formatTime(booking.start_time)}
+                          </span>
+                          <span className="mx-1 text-gray-300">—</span>
+                          <span className="font-medium text-gray-900">
+                            {formatTime(booking.end_time)}
+                          </span>
+                        </span>
+                      </div>
+                      {spot && (
+                        <div className="flex items-center gap-2 text-xs text-gray-600">
+                          <Clock className="h-3.5 w-3.5 text-gray-400" />
+                          <span>{getDuration(booking.start_time, booking.end_time)}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Green checkmarks */}
+                  <div className="mt-4 space-y-2">
+                    <div className="flex items-center gap-2 text-xs text-green-700">
+                      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-100">
+                        <Check className="h-3 w-3" />
+                      </div>
+                      <span>
+                        Cancel until{" "}
+                        <span className="font-medium">
+                          {booking ? getCancelDate(booking.start_time) : "the day before"}
+                        </span>
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-green-700">
+                      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-100">
+                        <Check className="h-3 w-3" />
+                      </div>
+                      <span>Easily change & extend in your dashboard</span>
+                    </div>
+                  </div>
+
+                  {/* Divider */}
+                  <div className="my-4 border-t border-gray-100" />
+
+                  {/* Price Breakdown */}
+                  <div className="space-y-2.5">
+                    <div className="flex justify-between text-sm text-gray-600">
+                      <span>Subtotal</span>
+                      <span className="text-gray-900">
+                        ${booking?.total_price.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm text-gray-400">
+                      <span>Service fee</span>
+                      <span>Included</span>
+                    </div>
+                    <div className="flex justify-between border-t border-gray-100 pt-2.5 text-base font-bold text-gray-900">
+                      <span>Total</span>
+                      <span>${booking?.total_price.toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Trust badges */}
+              <div className="space-y-2 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <Shield className="h-3.5 w-3.5 text-green-600" />
+                  Secure checkout with Stripe
+                </div>
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <Check className="h-3.5 w-3.5 text-green-600" />
+                  Free cancellation within 24 hours
+                </div>
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <Check className="h-3.5 w-3.5 text-green-600" />
+                  24/7 customer support
+                </div>
+              </div>
             </div>
           </div>
         </div>
