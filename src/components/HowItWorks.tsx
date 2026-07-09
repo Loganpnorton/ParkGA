@@ -113,11 +113,11 @@ export default function HowItWorks() {
     else setActiveIndex(2);
   });
 
-  /* Scroll hint fades out as user progresses */
-  const scrollHintOpacity = useTransform(
+  /* Scroll hint fades out quickly as user progresses */
+  const scrollOpacity = useTransform(
     scrollYProgress,
-    [0, 0.12, 0.25],
-    [1, 0.5, 0],
+    [0, 0.05],
+    [1, 0],
   );
 
   return (
@@ -208,25 +208,23 @@ export default function HowItWorks() {
 
         {/* ── Scroll Hint ─────────────────────────────────────────────── */}
         <motion.div
-          className="absolute bottom-6 left-1/2 z-30 -translate-x-1/2"
-          style={{ opacity: scrollHintOpacity }}
+          className="absolute bottom-8 left-1/2 z-30 -translate-x-1/2 flex flex-col items-center gap-1"
+          style={{ opacity: scrollOpacity }}
         >
-          <div className="flex flex-col items-center gap-1 text-xs text-gray-400">
-            <svg
-              className="h-5 w-5 animate-bounce"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 14l-7 7m0 0l-7-7m7 7V3"
-              />
-            </svg>
-            <span>Scroll</span>
-          </div>
+          <span className="text-xs text-gray-400">Scroll</span>
+          <svg
+            className="h-5 w-5 animate-bounce"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 14l-7 7m0 0l-7-7m7 7V3"
+            />
+          </svg>
         </motion.div>
       </div>
     </section>
