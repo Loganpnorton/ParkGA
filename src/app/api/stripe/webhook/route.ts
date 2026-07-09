@@ -89,6 +89,11 @@ export async function POST(req: NextRequest) {
     }
 
     // ── 6. Upsert booking: update status to confirmed ───────────────
+    // Include total_price from the session so the upsert also works
+    // when a prior insert was missed (e.g. RLS-blocked checkout).
+    const totalPriceCents = session.amount_total ?? 0;
+    const totalPriceDollars = totalPriceCents / 100;
+
     const { data: booking, error: upsertError } = await supabase
       .from("bookings")
       .upsert(
@@ -97,9 +102,11 @@ export async function POST(req: NextRequest) {
           guest_id,
           start_time,
           end_time,
+          total_price: totalPriceDollars,
           status: "confirmed",
           payment_intent_id: paymentIntentId,
           checkout_session_id: sessionId,
+          updated_at: new Date().toISOString(),
         },
         {
           onConflict: "checkout_session_id",
