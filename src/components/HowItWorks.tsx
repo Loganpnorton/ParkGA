@@ -46,6 +46,13 @@ const IMAGE_VARIANTS = {
   },
 };
 
+/* ── Horizontal align classes: Card 1 & 3 right, Card 2 left ──────────── */
+const ALIGN_CLASSES = [
+  "self-end justify-self-end mr-0 lg:mr-[40%]",
+  "self-start justify-self-start ml-0 lg:ml-[35%]",
+  "self-end justify-self-end mr-0 lg:mr-[40%]",
+];
+
 /* ── Step Card ──────────────────────────────────────────────────────────── */
 function StepCard({
   step,
@@ -56,39 +63,30 @@ function StepCard({
   index: number;
   isActive: boolean;
 }) {
-  const positionClasses = [
-    "absolute top-[15%] right-0 -translate-y-1/2 z-20 mr-0 md:mr-[40%]",
-    "absolute top-[50%] left-0 -translate-y-1/2 z-20 ml-0 md:ml-[35%]",
-    "absolute top-[85%] right-0 -translate-y-1/2 z-20 mr-0 md:mr-[40%]",
-  ][index];
-
   return (
     <motion.div
-      className={`${positionClasses} flex items-center gap-2 rounded-xl border border-gray-100 bg-white p-2 shadow-xl sm:gap-4 sm:p-4 lg:gap-6 lg:p-6 lg:rounded-2xl overflow-hidden`}
-      style={{
-        width: "clamp(140px, 55vw, 450px)",
-      }}
+      className={`${ALIGN_CLASSES[index]} relative z-10 flex items-center gap-1 rounded-xl border border-gray-100 bg-white p-1.5 shadow-xl overflow-hidden max-w-[95vw] sm:gap-3 sm:p-3 lg:gap-4 lg:p-4 lg:rounded-2xl sm:max-w-[450px]`}
       animate={{
         opacity: isActive ? 1 : 0.35,
         scale: isActive ? 1 : 0.92,
       }}
       transition={{ type: "spring", bounce: 0.3, duration: 0.6 }}
     >
-      {/* 3D Image — full responsive scale from mobile to desktop */}
+      {/* 3D Image */}
       <motion.img
         src={step.image}
         alt={step.title}
-        className="h-10 w-10 shrink-0 object-contain drop-shadow-lg sm:h-12 sm:w-12 md:h-16 md:w-16 lg:h-24 lg:w-24 xl:h-28 xl:w-28"
+        className="h-6 w-6 shrink-0 object-contain drop-shadow-lg sm:h-10 sm:w-10 md:h-12 md:w-12 lg:h-16 lg:w-16 xl:h-20 xl:w-20"
         variants={IMAGE_VARIANTS}
         animate={isActive ? "active" : "inactive"}
       />
 
-      {/* Text content — line-clamp prevents overflow on tiny screens */}
+      {/* Text content */}
       <div className="min-w-0 flex-1">
-        <h3 className="text-xs font-bold text-gray-900 sm:text-sm md:text-base lg:text-lg xl:text-xl">
+        <h3 className="text-[10px] font-bold text-gray-900 sm:text-xs md:text-sm lg:text-base xl:text-lg">
           {step.title}
         </h3>
-        <p className="mt-0.5 text-[9px] leading-tight text-gray-500 line-clamp-2 sm:text-[11px] sm:leading-relaxed sm:line-clamp-3 md:text-sm lg:line-clamp-none xl:text-base">
+        <p className="mt-0.5 text-[8px] leading-tight text-gray-500 line-clamp-2 sm:text-[10px] sm:leading-relaxed sm:line-clamp-3 md:text-xs lg:text-sm lg:line-clamp-none xl:text-base">
           {step.description}
         </p>
       </div>
@@ -99,23 +97,24 @@ function StepCard({
 /* ── How It Works Section ───────────────────────────────────────────────── */
 export default function HowItWorks() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [activeIndex, setActiveIndex] = useState(-1);
 
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end end"],
   });
 
-  /* Derive active step index (0, 1, 2) from scroll progress */
+  /* Derive active step index -1/0/1/2 from scroll progress */
   useMotionValueEvent(scrollYProgress, "change", (p: number) => {
-    if (p < 0.33) setActiveIndex(0);
+    if (p < 0.05) setActiveIndex(-1);
+    else if (p < 0.33) setActiveIndex(0);
     else if (p < 0.66) setActiveIndex(1);
     else setActiveIndex(2);
   });
 
   return (
     <section ref={containerRef} className="relative h-[300vh]">
-      {/* ── Sticky container — flex-col so canvas flex-1 fills remaining space ── */}
+      {/* ── Sticky container ─────────────────────────────────────────────── */}
       <div className="sticky top-0 relative flex flex-col h-screen w-full bg-white">
         {/* Dot-pattern background */}
         <div
@@ -127,7 +126,7 @@ export default function HowItWorks() {
           }}
         />
 
-        {/* Title — fixed at top, highest z-index to stay above cards */}
+        {/* Title */}
         <div className="relative z-30 text-center pt-6 sm:pt-8 pb-2 sm:pb-4">
           <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl md:text-4xl">
             How It Works
@@ -137,11 +136,11 @@ export default function HowItWorks() {
           </p>
         </div>
 
-        {/* Canvas — padding creates a gutter zone around the SVG where cards sit safely */}
-        <div className="relative w-full max-w-5xl mx-auto overflow-hidden flex-1 min-h-[500px] px-4 sm:px-6 md:px-0">
-          {/* SVG — inset from edges so cards in the gutter don't overlap the path */}
+        {/* ── Canvas: flex-col justify-between distributes cards naturally ── */}
+        <div className="relative flex flex-col justify-between flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-0 overflow-hidden pb-4">
+          {/* SVG — absolute behind the cards */}
           <svg
-            className="absolute inset-x-4 sm:inset-x-6 md:inset-x-0 inset-y-0 h-full"
+            className="absolute inset-x-4 sm:inset-x-6 lg:inset-x-0 inset-y-0 h-full z-0"
             viewBox="0 0 100 200"
             preserveAspectRatio="xMidYMid meet"
             style={{ pointerEvents: "none" }}
@@ -166,13 +165,13 @@ export default function HowItWorks() {
             />
           </svg>
 
-          {/* Step Cards */}
+          {/* Step Cards — flex children distributed via justify-between */}
           {STEPS.map((step, i) => (
             <StepCard
               key={step.title}
               step={step}
               index={i}
-              isActive={activeIndex === i}
+              isActive={i <= activeIndex}
             />
           ))}
         </div>
