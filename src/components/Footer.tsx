@@ -32,7 +32,7 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-green-900">
+    <footer className="bg-brand-900">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
           {/* Brand */}
@@ -44,7 +44,7 @@ export default function Footer() {
                 className="h-6 md:h-8 w-auto object-contain drop-shadow-sm hover:scale-105 transition-transform duration-200"
               />
             </Link>
-            <p className="mt-3 text-sm text-green-200">
+            <p className="mt-3 text-sm text-brand-200">
               The peer-to-peer marketplace connecting drivers with affordable parking spots across Georgia.
             </p>
           </div>
@@ -52,7 +52,7 @@ export default function Footer() {
           {/* Link Columns */}
           {Object.values(footerLinks).map((section) => (
             <div key={section.title}>
-              <h3 className="text-sm font-semibold text-green-100">
+              <h3 className="text-sm font-semibold text-brand-100">
                 {section.title}
               </h3>
               <ul className="mt-3 space-y-2">
@@ -60,7 +60,7 @@ export default function Footer() {
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-sm text-green-300 transition-colors hover:text-parkga-400"
+                      className="text-sm text-brand-300 transition-colors hover:text-brand-400"
                     >
                       {link.label}
                     </Link>
@@ -72,8 +72,8 @@ export default function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="mt-10 border-t border-green-800 pt-6">
-          <p className="text-center text-xs text-green-400">
+        <div className="mt-10 border-t border-brand-800 pt-6">
+          <p className="text-center text-xs text-brand-400">
             &copy; {currentYear} ParkGA. All rights reserved.
           </p>
         </div>

@@ -3,7 +3,7 @@
 import { useState, FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Car, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
@@ -41,16 +41,17 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="mb-8 text-center">
-          <Link href="/" className="inline-flex items-center gap-2">
-            <Car className="h-8 w-8 text-parkga-600" />
-            <span className="text-2xl font-bold tracking-tight text-gray-900">
-              Park<span className="text-parkga-600">GA</span>
-            </span>
+          <Link href="/" className="inline-block">
+            <img
+              src="/logo-full.png"
+              alt="ParkGA Logo"
+              className="mx-auto h-8 md:h-10 w-auto object-contain drop-shadow-sm hover:scale-105 transition-transform duration-200"
+            />
           </Link>
-          <h1 className="mt-6 text-3xl font-bold tracking-tight text-gray-900">
+          <h1 className="mt-6 text-3xl font-bold tracking-tight text-slate-900">
             Welcome back
           </h1>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-slate-600">
             Sign in to your account to continue
           </p>
         </div>

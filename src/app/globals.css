@@ -1,17 +1,29 @@
 @import "tailwindcss";
 
 @theme {
-  --color-parkga-50: #f0fdf4;
-  --color-parkga-100: #dcfce7;
-  --color-parkga-200: #bbf7d0;
-  --color-parkga-300: #86efac;
-  --color-parkga-400: #4ade80;
-  --color-parkga-500: #22c55e;
-  --color-parkga-600: #16a34a;
-  --color-parkga-700: #15803d;
-  --color-parkga-800: #166534;
-  --color-parkga-900: #14532d;
-  --color-parkga-950: #052e16;
+  --color-brand-50: #E8FBF4;
+  --color-brand-100: #C5F4E2;
+  --color-brand-200: #8EEDC8;
+  --color-brand-300: #50E0A8;
+  --color-brand-400: #1DCE8A;
+  --color-brand-500: #00B370;
+  --color-brand-600: #00965B;
+  --color-brand-700: #007849;
+  --color-brand-800: #00603C;
+  --color-brand-900: #004F31;
+  --color-brand-950: #002C1B;
+
+  --color-parkga-50: #E8FBF4;
+  --color-parkga-100: #C5F4E2;
+  --color-parkga-200: #8EEDC8;
+  --color-parkga-300: #50E0A8;
+  --color-parkga-400: #1DCE8A;
+  --color-parkga-500: #00B370;
+  --color-parkga-600: #00965B;
+  --color-parkga-700: #007849;
+  --color-parkga-800: #00603C;
+  --color-parkga-900: #004F31;
+  --color-parkga-950: #002C1B;
 }
 
 @layer base {

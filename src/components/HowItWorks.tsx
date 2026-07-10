@@ -83,10 +83,10 @@ function StepCard({
 
       {/* Text content */}
       <div className="min-w-0 flex-1">
-        <h3 className="text-[10px] font-bold text-gray-900 sm:text-xs md:text-sm lg:text-base xl:text-lg">
+        <h3 className="text-[10px] font-bold text-slate-900 sm:text-xs md:text-sm lg:text-base xl:text-lg">
           {step.title}
         </h3>
-        <p className="mt-0.5 text-[8px] leading-tight text-gray-500 line-clamp-2 sm:text-[10px] sm:leading-relaxed sm:line-clamp-3 md:text-xs lg:text-sm lg:line-clamp-none xl:text-base">
+        <p className="mt-0.5 text-[8px] leading-tight text-slate-500 line-clamp-2 sm:text-[10px] sm:leading-relaxed sm:line-clamp-3 md:text-xs lg:text-sm lg:line-clamp-none xl:text-base">
           {step.description}
         </p>
       </div>
@@ -121,17 +121,17 @@ export default function HowItWorks() {
           className="pointer-events-none absolute inset-0 opacity-[0.12]"
           style={{
             backgroundImage:
-              "radial-gradient(circle, #16a34a 0.75px, transparent 0.75px)",
+              "radial-gradient(circle, #00B370 0.75px, transparent 0.75px)",
             backgroundSize: "24px 24px",
           }}
         />
 
         {/* Title */}
         <div className="relative z-30 text-center pt-6 sm:pt-8 pb-2 sm:pb-4">
-          <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl md:text-4xl">
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl md:text-4xl">
             How It Works
           </h2>
-          <p className="mt-1 text-xs text-gray-500 sm:text-sm">
+          <p className="mt-1 text-xs text-slate-500 sm:text-sm">
             Scroll to follow the journey
           </p>
         </div>
@@ -154,10 +154,10 @@ export default function HowItWorks() {
               strokeLinecap="round"
             />
 
-            {/* Animated green path */}
+            {/* Animated brand path */}
             <motion.path
               d={SVG_PATH}
-              stroke="#16a34a"
+              stroke="#00B370"
               strokeWidth={2}
               fill="none"
               strokeLinecap="round"

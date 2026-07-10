@@ -64,9 +64,9 @@ const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
 ];
 
 const statusColors: Record<string, string> = {
-  pending: "bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20",
-  confirmed: "bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20",
-  active: "bg-green-100 text-green-700",
+  pending: "bg-brand-50 text-brand-700 ring-1 ring-inset ring-brand-600/20",
+  confirmed: "bg-brand-50 text-brand-700 ring-1 ring-inset ring-brand-600/20",
+  active: "bg-brand-100 text-brand-700",
   completed: "bg-gray-100 text-gray-600",
   cancelled: "bg-gray-50 text-gray-600 ring-1 ring-inset ring-gray-500/10",
   refunded: "bg-purple-100 text-purple-700",
@@ -396,13 +396,13 @@ function DashboardInner() {
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">Dashboard</h1>
-          <p className="mt-1 text-sm text-gray-500">Manage your bookings, listings, and profile</p>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Dashboard</h1>
+          <p className="mt-1 text-sm text-slate-500">Manage your bookings, listings, and profile</p>
         </div>
       </div>
 
       {stripeStatus === "success" && (
-        <div className="mb-6 flex items-center gap-2 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">
+        <div className="mb-6 flex items-center gap-2 rounded-lg bg-brand-50 px-4 py-3 text-sm text-brand-700">
           <CheckCircle className="h-4 w-4" /> Stripe account connected successfully! You can now receive payouts.
         </div>
       )}
@@ -420,7 +420,7 @@ function DashboardInner() {
             return (
               <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                 className={`inline-flex items-center gap-2 border-b-2 px-1 pb-3 text-sm font-medium transition-colors ${
-                  isActive ? "border-parkga-600 text-parkga-600" : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                  isActive ? "border-parkga-600 text-parkga-600" : "border-transparent text-slate-500 hover:border-gray-300 hover:text-slate-700"
                 }`}>
                 <Icon className="h-4 w-4" /> {tab.label}
               </button>
@@ -436,9 +436,9 @@ function DashboardInner() {
             <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-parkga-600" /></div>
           ) : myBookings.length === 0 ? (
             <div className="rounded-2xl border border-gray-200 bg-white p-12 text-center shadow-sm">
-              <Calendar className="mx-auto h-12 w-12 text-gray-300" />
-              <h3 className="mt-4 text-lg font-semibold text-gray-900">No bookings yet</h3>
-              <p className="mt-2 text-sm text-gray-500">Find a parking spot and book your first trip.</p>
+              <Calendar className="mx-auto h-12 w-12 text-slate-300" />
+              <h3 className="mt-4 text-lg font-semibold text-slate-900">No bookings yet</h3>
+              <p className="mt-2 text-sm text-slate-500">Find a parking spot and book your first trip.</p>
               <Link href="/listings" className="mt-6 inline-flex rounded-lg bg-parkga-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-parkga-700">
                 Browse spots
               </Link>
@@ -448,10 +448,10 @@ function DashboardInner() {
               {/* Summary cards */}
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                 {[
-                  { label: "Upcoming", count: myBookings.filter(b => ["pending", "confirmed"].includes(b.status)).length, color: "text-green-600" },
-                  { label: "Active", count: myBookings.filter(b => b.status === "active").length, color: "text-green-600" },
-                  { label: "Completed", count: myBookings.filter(b => b.status === "completed").length, color: "text-green-600" },
-                  { label: "Cancelled", count: myBookings.filter(b => b.status === "cancelled").length, color: "text-gray-400" },
+                  { label: "Upcoming", count: myBookings.filter(b => ["pending", "confirmed"].includes(b.status)).length, color: "text-brand-600" },
+                  { label: "Active", count: myBookings.filter(b => b.status === "active").length, color: "text-brand-600" },
+                  { label: "Completed", count: myBookings.filter(b => b.status === "completed").length, color: "text-brand-600" },
+                  { label: "Cancelled", count: myBookings.filter(b => b.status === "cancelled").length, color: "text-slate-400" },
                 ].map(stat => (
                   <div key={stat.label} className="bg-white border border-gray-200 rounded-xl shadow-sm p-4">
                     <p className={`text-2xl font-bold ${stat.color}`}>{stat.count}</p>
@@ -520,7 +520,7 @@ function DashboardInner() {
                       )}
                       {(booking.status === "completed" || (booking.status === "confirmed" && new Date(booking.end_time) < new Date())) && (
                         <button onClick={() => openReviewModal(booking)}
-                          className="inline-flex items-center gap-1 rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white border border-transparent shadow-sm transition-colors hover:bg-green-700">
+                          className="inline-flex items-center gap-1 rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-medium text-white border border-transparent shadow-sm transition-colors hover:bg-brand-700">
                           <Star className="h-3 w-3" />
                           Leave a Review
                         </button>
@@ -718,7 +718,7 @@ function DashboardInner() {
                 </div>
               </div>
 
-              {saveSuccess && <div className="rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">Profile updated successfully.</div>}
+              {saveSuccess && <div className="rounded-lg bg-brand-50 px-4 py-3 text-sm text-brand-700">Profile updated successfully.</div>}
               {saveError && <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{saveError}</div>}
 
               <div>
@@ -783,7 +783,7 @@ function DashboardInner() {
 
             {/* Success */}
             {reviewSuccess && (
-              <div className="mt-4 flex items-center gap-2 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">
+              <div className="mt-4 flex items-center gap-2 rounded-lg bg-brand-50 px-4 py-3 text-sm text-brand-700">
                 <CheckCircle className="h-4 w-4" />
                 Review submitted! Thank you.
               </div>

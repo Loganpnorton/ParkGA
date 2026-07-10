@@ -243,11 +243,11 @@ export default function HomePage() {
       {/* ── How It Works Section (sticky-scroll) ──────────────────────────── */}
       <HowItWorks />
 
-      {/* ── Diffused transition: white → green-900 ───────────────────────── */}
-      <div className="h-24 bg-gradient-to-b from-white via-white/60 to-green-900" />
+      {/* ── Diffused transition: white → brand-900 ───────────────────────── */}
+      <div className="h-24 bg-gradient-to-b from-white via-white/60 to-brand-900" />
 
       {/* ── Unified Host + CTA Block ─────────────────────────────────────── */}
-      <section className="bg-green-900">
+      <section className="bg-brand-900">
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
           <div className="flex flex-col items-center gap-12 md:flex-row md:gap-16">
             {/* Left — Content */}
@@ -259,7 +259,7 @@ export default function HomePage() {
                 Your Driveway.
                 <span className="block text-parkga-400">Their Parking Spot.</span>
               </h2>
-              <p className="mt-6 text-lg leading-8 text-green-100/80">
+              <p className="mt-6 text-lg leading-8 text-brand-100/80">
                 Unlike corporate garages, ParkGA is built by locals, for locals.
                 Turn your empty driveway into passive income during game days and
                 local events. We handle the payments, you keep the profits.
@@ -276,14 +276,14 @@ export default function HomePage() {
                 </a>
                 <a
                   href="/auth/signup"
-                  className="inline-flex items-center gap-2 rounded-xl border border-green-500/30 px-8 py-4 text-base font-semibold text-green-100 transition-all duration-300 hover:border-green-500/60 hover:bg-white/5"
+                  className="inline-flex items-center gap-2 rounded-xl border border-brand-500/30 px-8 py-4 text-base font-semibold text-brand-100 transition-all duration-300 hover:border-brand-500/60 hover:bg-white/5"
                 >
                   Create an Account
                 </a>
               </div>
 
               {/* Trust markers */}
-              <div className="mt-10 flex flex-wrap items-center gap-8 text-sm text-green-200/60">
+              <div className="mt-10 flex flex-wrap items-center gap-8 text-sm text-brand-200/60">
                 <span className="flex items-center gap-1.5">
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -307,7 +307,7 @@ export default function HomePage() {
 
             {/* Right — Image */}
             <div className="w-full md:w-1/2">
-              <div className="overflow-hidden rounded-2xl shadow-2xl shadow-green-950/50">
+              <div className="overflow-hidden rounded-2xl shadow-2xl shadow-brand-950/50">
                 <div
                   className="aspect-[4/3] w-full bg-cover bg-center transition-transform duration-700 hover:scale-105"
                   style={{
@@ -316,14 +316,14 @@ export default function HomePage() {
                   }}
                 />
               </div>
-              <p className="mt-3 text-center text-xs text-green-200/40 md:text-left">
+              <p className="mt-3 text-center text-xs text-brand-200/40 md:text-left">
                 A typical Atlanta driveway — ready to earn.
               </p>
             </div>
           </div>
         </div>
 
-        {/* ── Bottom transition: seamless into footer's green-900 ── */}
+        {/* ── Bottom transition: seamless into footer's brand-900 ── */}
         <div className="h-8" />
       </section>
     </>

@@ -248,7 +248,7 @@ export default function AdminPortalPage() {
         </div>
       )}
       {successMsg && (
-        <div className="mb-6 flex items-center gap-2 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">
+        <div className="mb-6 flex items-center gap-2 rounded-lg bg-brand-50 px-4 py-3 text-sm text-brand-700">
           <CheckCircle className="h-4 w-4 shrink-0" />
           {successMsg}
         </div>
@@ -372,7 +372,7 @@ export default function AdminPortalPage() {
                     </td>
                     <td className="px-4 py-3 text-center">
                       {spot.active ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-brand-100 px-2.5 py-0.5 text-xs font-medium text-brand-700">
                           <CheckCircle className="h-3 w-3" />
                           Active
                         </span>
@@ -390,7 +390,7 @@ export default function AdminPortalPage() {
                         className={`inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 ${
                           spot.active
                             ? "border border-red-200 text-red-600 hover:bg-red-50"
-                            : "border border-green-200 text-green-600 hover:bg-green-50"
+                            : "border border-brand-200 text-brand-600 hover:bg-brand-50"
                         }`}
                       >
                         {togglingSpot === spot.id ? (
@@ -436,7 +436,7 @@ function StatCard({
 }) {
   const colorMap: Record<string, string> = {
     blue: "bg-blue-50 text-blue-600",
-    green: "bg-green-50 text-green-600",
+    green: "bg-brand-50 text-brand-600",
     purple: "bg-purple-50 text-purple-600",
     amber: "bg-amber-50 text-amber-600",
   };

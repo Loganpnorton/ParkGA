@@ -83,7 +83,7 @@ export default function Navbar() {
             <Link
               key={link.href}
               href={link.href}
-              className="text-sm font-medium text-gray-600 transition-colors hover:text-parkga-600"
+              className="text-sm font-medium text-slate-600 transition-colors hover:text-parkga-600"
             >
               {link.label}
             </Link>
@@ -102,13 +102,13 @@ export default function Navbar() {
             <div ref={dropdownRef} className="relative">
               <button
                 onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
+                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-gray-100"
               >
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-parkga-100 text-xs font-bold text-parkga-700">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-700">
                   {userName.charAt(0).toUpperCase()}
                 </span>
                 <span className="max-w-[120px] truncate">{userName}</span>
-                <ChevronDown className="h-4 w-4 text-gray-400" />
+                <ChevronDown className="h-4 w-4 text-slate-400" />
               </button>
 
               {dropdownOpen && (
@@ -117,17 +117,17 @@ export default function Navbar() {
                     <Link
                       href="/dashboard"
                       onClick={() => setDropdownOpen(false)}
-                      className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                      className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-gray-50"
                     >
-                      <LayoutDashboard className="h-4 w-4 text-gray-400" />
+                      <LayoutDashboard className="h-4 w-4 text-slate-400" />
                       Dashboard
                     </Link>
                     <Link
                       href="/dashboard?tab=profile"
                       onClick={() => setDropdownOpen(false)}
-                      className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                      className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-gray-50"
                     >
-                      <User className="h-4 w-4 text-gray-400" />
+                      <User className="h-4 w-4 text-slate-400" />
                       My Profile
                     </Link>
                     <hr className="my-1 border-gray-100" />
@@ -146,7 +146,7 @@ export default function Navbar() {
             <>
               <Link
                 href="/auth/login"
-                className="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
+                className="rounded-lg px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-gray-100"
               >
                 Log in
               </Link>
@@ -164,7 +164,7 @@ export default function Navbar() {
         <button
           type="button"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="inline-flex items-center justify-center rounded-md p-2 text-gray-600 hover:bg-gray-100 md:hidden"
+          className="inline-flex items-center justify-center rounded-md p-2 text-slate-600 hover:bg-gray-100 md:hidden"
           aria-label="Toggle mobile menu"
         >
           {mobileMenuOpen ? (
@@ -184,7 +184,7 @@ export default function Navbar() {
                 key={link.href}
                 href={link.href}
                 onClick={() => setMobileMenuOpen(false)}
-                className="block rounded-md px-3 py-2 text-base font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-parkga-600"
+                className="block rounded-md px-3 py-2 text-base font-medium text-slate-600 transition-colors hover:bg-gray-50 hover:text-parkga-600"
               >
                 {link.label}
               </Link>
@@ -199,8 +199,8 @@ export default function Navbar() {
             <div className="border-t border-gray-100 pt-3">
               {userName ? (
                 <>
-                  <div className="flex items-center gap-2 px-3 py-2 text-sm text-gray-500">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-parkga-100 text-xs font-bold text-parkga-700">
+                  <div className="flex items-center gap-2 px-3 py-2 text-sm text-slate-500">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-700">
                       {userName.charAt(0).toUpperCase()}
                     </span>
                     {userName}
@@ -208,7 +208,7 @@ export default function Navbar() {
                   <Link
                     href="/dashboard"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-2 rounded-md px-3 py-2 text-base font-medium text-gray-600 transition-colors hover:bg-gray-50"
+                    className="flex items-center gap-2 rounded-md px-3 py-2 text-base font-medium text-slate-600 transition-colors hover:bg-gray-50"
                   >
                     <LayoutDashboard className="h-4 w-4" />
                     Dashboard
@@ -216,7 +216,7 @@ export default function Navbar() {
                   <Link
                     href="/dashboard?tab=profile"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-2 rounded-md px-3 py-2 text-base font-medium text-gray-600 transition-colors hover:bg-gray-50"
+                    className="flex items-center gap-2 rounded-md px-3 py-2 text-base font-medium text-slate-600 transition-colors hover:bg-gray-50"
                   >
                     <User className="h-4 w-4" />
                     My Profile
@@ -237,7 +237,7 @@ export default function Navbar() {
                   <Link
                     href="/auth/login"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block rounded-md px-3 py-2 text-base font-medium text-gray-600 transition-colors hover:bg-gray-50"
+                    className="block rounded-md px-3 py-2 text-base font-medium text-slate-600 transition-colors hover:bg-gray-50"
                   >
                     Log in
                   </Link>

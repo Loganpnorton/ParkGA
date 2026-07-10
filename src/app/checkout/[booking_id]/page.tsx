@@ -132,7 +132,7 @@ function AccordionCard({
         isDisabled && !isComplete
           ? "cursor-not-allowed border-gray-100 opacity-60"
           : "border-gray-200 hover:shadow-md"
-      } ${isComplete && !isOpen ? "border-green-200" : ""}`}
+      } ${isComplete && !isOpen ? "border-brand-200" : ""}`}
     >
       <button
         type="button"
@@ -145,7 +145,7 @@ function AccordionCard({
         <span
           className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
             isComplete
-              ? "bg-green-600 text-white"
+              ? "bg-brand-600 text-white"
               : isOpen
                 ? "bg-parkga-600 text-white"
                 : "bg-gray-200 text-gray-500"
@@ -157,7 +157,7 @@ function AccordionCard({
         {/* Title */}
         <span
           className={`flex-1 text-sm font-semibold ${
-            isComplete ? "text-green-700" : "text-gray-900"
+            isComplete ? "text-brand-700" : "text-slate-900"
           }`}
         >
           {title}
@@ -165,7 +165,7 @@ function AccordionCard({
 
         {/* Summary when collapsed + complete */}
         {isComplete && !isOpen && (
-          <span className="mr-1 text-xs text-green-600 font-medium">Complete</span>
+          <span className="mr-1 text-xs text-brand-600 font-medium">Complete</span>
         )}
 
         {/* Chevron */}
@@ -574,13 +574,13 @@ export default function CheckoutPage() {
     return (
       <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-12">
         <div className="w-full max-w-md text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-            <Check className="h-8 w-8 text-green-600" />
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-brand-100">
+            <Check className="h-8 w-8 text-brand-600" />
           </div>
-          <h1 className="mt-6 text-3xl font-bold tracking-tight text-gray-900">
+          <h1 className="mt-6 text-3xl font-bold tracking-tight text-slate-900">
             Already Confirmed!
           </h1>
-          <p className="mt-3 text-sm text-gray-600">
+          <p className="mt-3 text-sm text-slate-600">
             This booking has already been paid and confirmed. Check your
             dashboard for details.
           </p>
@@ -881,8 +881,8 @@ export default function CheckoutPage() {
 
             {/* Security badge */}
             <div className="flex items-center justify-center gap-2 rounded-xl bg-white border border-gray-200 px-4 py-3 shadow-sm">
-              <Shield className="h-4 w-4 shrink-0 text-green-600" />
-              <p className="text-xs text-gray-600">
+              <Shield className="h-4 w-4 shrink-0 text-brand-600" />
+              <p className="text-xs text-slate-600">
                 Your payment information is processed securely via{" "}
                 <span className="font-semibold">Stripe</span>. We never store
                 your full card details.
@@ -961,10 +961,10 @@ export default function CheckoutPage() {
                     </div>
                   )}
 
-                  {/* Green checkmarks */}
+                  {/* Brand checkmarks */}
                   <div className="mt-4 space-y-2">
-                    <div className="flex items-center gap-2 text-xs text-green-700">
-                      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-100">
+                    <div className="flex items-center gap-2 text-xs text-brand-700">
+                      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-100">
                         <Check className="h-3 w-3" />
                       </div>
                       <span>
@@ -976,8 +976,8 @@ export default function CheckoutPage() {
                         </span>
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-green-700">
-                      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-100">
+                    <div className="flex items-center gap-2 text-xs text-brand-700">
+                      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-100">
                         <Check className="h-3 w-3" />
                       </div>
                       <span>Easily change & extend in your dashboard</span>
@@ -989,17 +989,17 @@ export default function CheckoutPage() {
 
                   {/* Price Breakdown */}
                   <div className="space-y-2.5">
-                    <div className="flex justify-between text-sm text-gray-600">
+                    <div className="flex justify-between text-sm text-slate-600">
                       <span>Subtotal</span>
-                      <span className="text-gray-900">
+                      <span className="text-slate-900">
                         ${booking?.total_price.toFixed(2)}
                       </span>
                     </div>
-                    <div className="flex justify-between text-sm text-gray-400">
+                    <div className="flex justify-between text-sm text-slate-400">
                       <span>Service fee</span>
                       <span>Included</span>
                     </div>
-                    <div className="flex justify-between border-t border-gray-100 pt-2.5 text-base font-bold text-gray-900">
+                    <div className="flex justify-between border-t border-gray-100 pt-2.5 text-base font-bold text-slate-900">
                       <span>Total</span>
                       <span>${booking?.total_price.toFixed(2)}</span>
                     </div>
@@ -1009,16 +1009,16 @@ export default function CheckoutPage() {
 
               {/* Trust badges */}
               <div className="space-y-2 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                <div className="flex items-center gap-2 text-xs text-gray-500">
-                  <Shield className="h-3.5 w-3.5 text-green-600" />
+                <div className="flex items-center gap-2 text-xs text-slate-500">
+                  <Shield className="h-3.5 w-3.5 text-brand-600" />
                   Secure checkout with Stripe
                 </div>
-                <div className="flex items-center gap-2 text-xs text-gray-500">
-                  <Check className="h-3.5 w-3.5 text-green-600" />
+                <div className="flex items-center gap-2 text-xs text-slate-500">
+                  <Check className="h-3.5 w-3.5 text-brand-600" />
                   Free cancellation within 24 hours
                 </div>
-                <div className="flex items-center gap-2 text-xs text-gray-500">
-                  <Check className="h-3.5 w-3.5 text-green-600" />
+                <div className="flex items-center gap-2 text-xs text-slate-500">
+                  <Check className="h-3.5 w-3.5 text-brand-600" />
                   24/7 customer support
                 </div>
               </div>
