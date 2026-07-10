@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Car } from "lucide-react";
 
 const footerLinks = {
   product: {
@@ -38,11 +37,12 @@ export default function Footer() {
         <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
-            <Link href="/" className="flex items-center gap-2">
-              <Car className="h-6 w-6 text-parkga-400" />
-              <span className="text-lg font-bold tracking-tight text-white">
-                Park<span className="text-parkga-400">GA</span>
-              </span>
+            <Link href="/">
+              <img
+                src="/logo-full.png"
+                alt="ParkGA Logo"
+                className="h-6 md:h-8 w-auto object-contain drop-shadow-sm hover:scale-105 transition-transform duration-200"
+              />
             </Link>
             <p className="mt-3 text-sm text-green-200">
               The peer-to-peer marketplace connecting drivers with affordable parking spots across Georgia.
