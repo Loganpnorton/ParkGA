@@ -57,16 +57,16 @@ function StepCard({
   isActive: boolean;
 }) {
   const positionClasses = [
-    "absolute top-[10%] left-[40%] md:left-[35%] -translate-y-1/2 z-20",
-    "absolute top-[50%] right-[40%] md:right-[35%] -translate-y-1/2 z-20",
-    "absolute top-[90%] left-[40%] md:left-[35%] -translate-y-1/2 z-20",
+    "absolute top-[15%] right-0 -translate-y-1/2 z-20 mr-0 md:mr-[40%]",
+    "absolute top-[50%] left-0 -translate-y-1/2 z-20 ml-0 md:ml-[35%]",
+    "absolute top-[85%] right-0 -translate-y-1/2 z-20 mr-0 md:mr-[40%]",
   ][index];
 
   return (
     <motion.div
-      className={`${positionClasses} flex items-center gap-5 rounded-2xl border border-gray-100 bg-white/80 p-5 shadow-xl backdrop-blur-md sm:gap-6 sm:p-6`}
+      className={`${positionClasses} flex items-center gap-2 rounded-xl border border-gray-100 bg-white p-2 shadow-xl sm:gap-4 sm:p-4 lg:gap-6 lg:p-6 lg:rounded-2xl overflow-hidden`}
       style={{
-        width: "clamp(300px, 36vw, 450px)",
+        width: "clamp(140px, 55vw, 450px)",
       }}
       animate={{
         opacity: isActive ? 1 : 0.35,
@@ -74,21 +74,21 @@ function StepCard({
       }}
       transition={{ type: "spring", bounce: 0.3, duration: 0.6 }}
     >
-      {/* 3D Image — springs out when active, sucks back when inactive */}
+      {/* 3D Image — full responsive scale from mobile to desktop */}
       <motion.img
         src={step.image}
         alt={step.title}
-        className="h-24 w-24 shrink-0 object-contain drop-shadow-2xl md:h-32 md:w-32"
+        className="h-10 w-10 shrink-0 object-contain drop-shadow-lg sm:h-12 sm:w-12 md:h-16 md:w-16 lg:h-24 lg:w-24 xl:h-28 xl:w-28"
         variants={IMAGE_VARIANTS}
         animate={isActive ? "active" : "inactive"}
       />
 
-      {/* Text content */}
+      {/* Text content — line-clamp prevents overflow on tiny screens */}
       <div className="min-w-0 flex-1">
-        <h3 className="text-base font-bold text-gray-900 sm:text-lg">
+        <h3 className="text-xs font-bold text-gray-900 sm:text-sm md:text-base lg:text-lg xl:text-xl">
           {step.title}
         </h3>
-        <p className="mt-1 text-xs leading-relaxed text-gray-500 sm:text-sm">
+        <p className="mt-0.5 text-[9px] leading-tight text-gray-500 line-clamp-2 sm:text-[11px] sm:leading-relaxed sm:line-clamp-3 md:text-sm lg:line-clamp-none xl:text-base">
           {step.description}
         </p>
       </div>
@@ -115,8 +115,8 @@ export default function HowItWorks() {
 
   return (
     <section ref={containerRef} className="relative h-[300vh]">
-      {/* ── Sticky container — `relative` provides abspos context ──────── */}
-      <div className="sticky top-0 relative flex h-screen w-full items-center justify-center overflow-hidden bg-white">
+      {/* ── Sticky container — flex-col so canvas flex-1 fills remaining space ── */}
+      <div className="sticky top-0 relative flex flex-col h-screen w-full bg-white">
         {/* Dot-pattern background */}
         <div
           className="pointer-events-none absolute inset-0 opacity-[0.12]"
@@ -127,61 +127,54 @@ export default function HowItWorks() {
           }}
         />
 
-        {/* ── Content column ───────────────────────────────────────────── */}
-        <div className="flex flex-col items-center w-full max-w-5xl mx-auto">
-          {/* Title — breathing room via mb-12 */}
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              How It Works
-            </h2>
-            <p className="mt-2 text-sm text-gray-500">
-              Scroll to follow the journey
-            </p>
-          </div>
+        {/* Title — fixed at top, highest z-index to stay above cards */}
+        <div className="relative z-30 text-center pt-6 sm:pt-8 pb-2 sm:pb-4">
+          <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl md:text-4xl">
+            How It Works
+          </h2>
+          <p className="mt-1 text-xs text-gray-500 sm:text-sm">
+            Scroll to follow the journey
+          </p>
+        </div>
 
-          {/* Canvas */}
-          <div className="relative w-full h-[800px] md:h-[1200px]">
-            {/* SVG Elongated S-Curve — no preserveAspectRatio="none"
-                so the viewBox scales naturally, and vectorEffect +
-                pathLength work correctly together without artifacts */}
-            <svg
-              className="absolute inset-0 h-full w-full"
-              viewBox="0 0 100 200"
-              preserveAspectRatio="xMidYMid meet"
-              style={{ pointerEvents: "none" }}
-            >
-              {/* Grey background path */}
-              <path
-                d={SVG_PATH}
-                stroke="#e5e7eb"
-                strokeWidth={1.5}
-                fill="none"
-                strokeLinecap="round"
-              />
+        {/* Canvas — padding creates a gutter zone around the SVG where cards sit safely */}
+        <div className="relative w-full max-w-5xl mx-auto overflow-hidden flex-1 min-h-[500px] px-4 sm:px-6 md:px-0">
+          {/* SVG — inset from edges so cards in the gutter don't overlap the path */}
+          <svg
+            className="absolute inset-x-4 sm:inset-x-6 md:inset-x-0 inset-y-0 h-full"
+            viewBox="0 0 100 200"
+            preserveAspectRatio="xMidYMid meet"
+            style={{ pointerEvents: "none" }}
+          >
+            {/* Grey background path */}
+            <path
+              d={SVG_PATH}
+              stroke="#e5e7eb"
+              strokeWidth={1.5}
+              fill="none"
+              strokeLinecap="round"
+            />
 
-              {/* Animated green path — no vectorEffect needed since
-                  viewBox scales naturally, no SVG filter to avoid
-                  pathLength render conflicts */}
-              <motion.path
-                d={SVG_PATH}
-                stroke="#16a34a"
-                strokeWidth={2}
-                fill="none"
-                strokeLinecap="round"
-                style={{ pathLength: scrollYProgress }}
-              />
-            </svg>
+            {/* Animated green path */}
+            <motion.path
+              d={SVG_PATH}
+              stroke="#16a34a"
+              strokeWidth={2}
+              fill="none"
+              strokeLinecap="round"
+              style={{ pathLength: scrollYProgress }}
+            />
+          </svg>
 
-            {/* Step Cards */}
-            {STEPS.map((step, i) => (
-              <StepCard
-                key={step.title}
-                step={step}
-                index={i}
-                isActive={activeIndex === i}
-              />
-            ))}
-          </div>
+          {/* Step Cards */}
+          {STEPS.map((step, i) => (
+            <StepCard
+              key={step.title}
+              step={step}
+              index={i}
+              isActive={activeIndex === i}
+            />
+          ))}
         </div>
       </div>
     </section>
