@@ -252,7 +252,7 @@ function PaymentFormContent({
       <button
         type="submit"
         disabled={!stripe || processing}
-        className="flex w-full items-center justify-center gap-2 rounded-lg bg-parkga-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-parkga-700 disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex w-full items-center justify-center gap-2 rounded-lg bg-parkga-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-parkga-700 disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px]"
       >
         {processing ? (
           <>
@@ -622,7 +622,7 @@ export default function CheckoutPage() {
       </div>
 
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:py-10">
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-5">
+        <div className="flex flex-col-reverse gap-8 lg:grid lg:grid-cols-5">
           {/* ═══ LEFT COLUMN: Accordion Flow ═══ */}
           <div className="space-y-4 lg:col-span-3">
             <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">
@@ -656,7 +656,7 @@ export default function CheckoutPage() {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="your@email.com"
-                        className="block w-full rounded-lg border border-gray-300 pl-10 pr-4 py-2.5 text-sm text-gray-900 transition-colors focus:border-parkga-500 focus:outline-none focus:ring-2 focus:ring-parkga-500/20"
+                        className="block w-full rounded-lg border border-gray-300 pl-10 pr-4 py-2.5 text-sm text-gray-900 transition-colors focus:border-parkga-500 focus:outline-none focus:ring-2 focus:ring-parkga-500/20 min-h-[44px]"
                       />
                     </div>
                   </div>
@@ -673,7 +673,7 @@ export default function CheckoutPage() {
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                         placeholder="+1 (555) 123-4567"
-                        className="block w-full rounded-lg border border-gray-300 pl-10 pr-4 py-2.5 text-sm text-gray-900 transition-colors focus:border-parkga-500 focus:outline-none focus:ring-2 focus:ring-parkga-500/20"
+                        className="block w-full rounded-lg border border-gray-300 pl-10 pr-4 py-2.5 text-sm text-gray-900 transition-colors focus:border-parkga-500 focus:outline-none focus:ring-2 focus:ring-parkga-500/20 min-h-[44px]"
                       />
                     </div>
                   </div>
@@ -692,7 +692,7 @@ export default function CheckoutPage() {
                     type="button"
                     onClick={handleContactContinue}
                     disabled={!isContactValid}
-                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-parkga-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-parkga-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-parkga-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-parkga-700 disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px]"
                   >
                     Continue to payment
                   </button>
@@ -798,7 +798,7 @@ export default function CheckoutPage() {
                             setVehicle((v) => ({ ...v, make: e.target.value }))
                           }
                           placeholder="e.g. Honda"
-                          className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 transition-colors focus:border-parkga-500 focus:outline-none focus:ring-2 focus:ring-parkga-500/20"
+                          className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 transition-colors focus:border-parkga-500 focus:outline-none focus:ring-2 focus:ring-parkga-500/20 min-h-[44px]"
                         />
                       </div>
 
@@ -814,7 +814,7 @@ export default function CheckoutPage() {
                             setVehicle((v) => ({ ...v, model: e.target.value }))
                           }
                           placeholder="e.g. Civic"
-                          className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 transition-colors focus:border-parkga-500 focus:outline-none focus:ring-2 focus:ring-parkga-500/20"
+                          className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 transition-colors focus:border-parkga-500 focus:outline-none focus:ring-2 focus:ring-parkga-500/20 min-h-[44px]"
                         />
                       </div>
 
@@ -830,7 +830,7 @@ export default function CheckoutPage() {
                             setVehicle((v) => ({ ...v, color: e.target.value }))
                           }
                           placeholder="e.g. Silver"
-                          className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 transition-colors focus:border-parkga-500 focus:outline-none focus:ring-2 focus:ring-parkga-500/20"
+                          className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 transition-colors focus:border-parkga-500 focus:outline-none focus:ring-2 focus:ring-parkga-500/20 min-h-[44px]"
                         />
                       </div>
 
@@ -849,7 +849,7 @@ export default function CheckoutPage() {
                             }))
                           }
                           placeholder="e.g. ABC 1234"
-                          className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 transition-colors focus:border-parkga-500 focus:outline-none focus:ring-2 focus:ring-parkga-500/20"
+                          className="block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 transition-colors focus:border-parkga-500 focus:outline-none focus:ring-2 focus:ring-parkga-500/20 min-h-[44px]"
                         />
                       </div>
                     </div>
@@ -859,7 +859,7 @@ export default function CheckoutPage() {
                       <button
                         type="button"
                         onClick={handleVehicleSave}
-                        className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-parkga-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-parkga-700"
+                        className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-parkga-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-parkga-700 min-h-[44px]"
                       >
                         <Check className="h-4 w-4" />
                         Save vehicle
@@ -869,7 +869,7 @@ export default function CheckoutPage() {
                       <button
                         type="button"
                         onClick={handleSkipVehicle}
-                        className="flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-6 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                        className="flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-6 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 min-h-[44px]"
                       >
                         Skip
                       </button>

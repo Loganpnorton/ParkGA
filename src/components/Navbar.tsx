@@ -164,7 +164,7 @@ export default function Navbar() {
         <button
           type="button"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="inline-flex items-center justify-center rounded-md p-2 text-slate-600 hover:bg-gray-100 md:hidden"
+          className="inline-flex items-center justify-center rounded-md p-2 text-slate-600 hover:bg-gray-100 md:hidden min-h-[44px] min-w-[44px]"
           aria-label="Toggle mobile menu"
         >
           {mobileMenuOpen ? (
@@ -184,7 +184,7 @@ export default function Navbar() {
                 key={link.href}
                 href={link.href}
                 onClick={() => setMobileMenuOpen(false)}
-                className="block rounded-md px-3 py-2 text-base font-medium text-slate-600 transition-colors hover:bg-gray-50 hover:text-parkga-600"
+                className="block rounded-md px-3 py-3 text-base font-medium text-slate-600 transition-colors hover:bg-gray-50 hover:text-parkga-600 min-h-[44px] flex items-center"
               >
                 {link.label}
               </Link>
@@ -192,7 +192,7 @@ export default function Navbar() {
             <Link
               href="/host/new"
               onClick={() => setMobileMenuOpen(false)}
-              className="block rounded-md bg-parkga-600 px-3 py-2 text-center text-base font-medium text-white transition-colors hover:bg-parkga-700"
+              className="block rounded-md bg-parkga-600 px-3 py-3 text-center text-base font-medium text-white transition-colors hover:bg-parkga-700 min-h-[44px] flex items-center justify-center"
             >
               List a Space
             </Link>
@@ -208,7 +208,7 @@ export default function Navbar() {
                   <Link
                     href="/dashboard"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-2 rounded-md px-3 py-2 text-base font-medium text-slate-600 transition-colors hover:bg-gray-50"
+                    className="flex items-center gap-2 rounded-md px-3 py-3 text-base font-medium text-slate-600 transition-colors hover:bg-gray-50 min-h-[44px]"
                   >
                     <LayoutDashboard className="h-4 w-4" />
                     Dashboard
@@ -216,7 +216,7 @@ export default function Navbar() {
                   <Link
                     href="/dashboard?tab=profile"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-2 rounded-md px-3 py-2 text-base font-medium text-slate-600 transition-colors hover:bg-gray-50"
+                    className="flex items-center gap-2 rounded-md px-3 py-3 text-base font-medium text-slate-600 transition-colors hover:bg-gray-50 min-h-[44px]"
                   >
                     <User className="h-4 w-4" />
                     My Profile
@@ -226,7 +226,7 @@ export default function Navbar() {
                       setMobileMenuOpen(false);
                       handleSignOut();
                     }}
-                    className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-base font-medium text-red-600 transition-colors hover:bg-red-50"
+                    className="flex w-full items-center gap-2 rounded-md px-3 py-3 text-base font-medium text-red-600 transition-colors hover:bg-red-50 min-h-[44px]"
                   >
                     <LogOut className="h-4 w-4" />
                     Log Out
@@ -237,14 +237,14 @@ export default function Navbar() {
                   <Link
                     href="/auth/login"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block rounded-md px-3 py-2 text-base font-medium text-slate-600 transition-colors hover:bg-gray-50"
+                    className="block rounded-md px-3 py-3 text-base font-medium text-slate-600 transition-colors hover:bg-gray-50 min-h-[44px] flex items-center"
                   >
                     Log in
                   </Link>
                   <Link
                     href="/auth/signup"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="mt-1 block rounded-md bg-parkga-600 px-3 py-2 text-center text-base font-medium text-white transition-colors hover:bg-parkga-700"
+                    className="mt-1 block rounded-md bg-parkga-600 px-3 py-3 text-center text-base font-medium text-white transition-colors hover:bg-parkga-700 min-h-[44px] flex items-center justify-center"
                   >
                     Sign up
                   </Link>

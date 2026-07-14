@@ -105,7 +105,7 @@ function SpotHeroPopupCard({
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 text-gray-600 shadow transition-colors hover:bg-white hover:text-gray-900"
+          className="absolute right-2 top-2 flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-white/80 text-gray-600 shadow transition-colors hover:bg-white hover:text-gray-900"
           aria-label="Close"
         >
           <X className="h-4 w-4" />
@@ -117,7 +117,7 @@ function SpotHeroPopupCard({
             <button
               type="button"
               onClick={prevImage}
-              className="absolute left-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-gray-600 shadow transition-colors hover:bg-white hover:text-gray-900"
+              className="absolute left-2 top-1/2 flex min-h-[44px] min-w-[44px] -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-gray-600 shadow transition-colors hover:bg-white hover:text-gray-900"
               aria-label="Previous image"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -125,7 +125,7 @@ function SpotHeroPopupCard({
             <button
               type="button"
               onClick={nextImage}
-              className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-gray-600 shadow transition-colors hover:bg-white hover:text-gray-900"
+              className="absolute right-2 top-1/2 flex min-h-[44px] min-w-[44px] -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-gray-600 shadow transition-colors hover:bg-white hover:text-gray-900"
               aria-label="Next image"
             >
               <ChevronRight className="h-4 w-4" />
@@ -170,7 +170,7 @@ function SpotHeroPopupCard({
           </div>
           <Link
             href={`/listings/${spot.id}`}
-            className="rounded-lg bg-parkga-600 px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-parkga-700"
+            className="rounded-lg bg-parkga-600 px-4 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-parkga-700 min-h-[44px] flex items-center"
           >
             Book Now
           </Link>
@@ -300,7 +300,7 @@ function SpotCard({
           <div className="mt-3 flex items-center gap-2">
             <Link
               href={`/listings/${spot.id}`}
-              className="rounded-lg bg-parkga-600 px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-parkga-700"
+              className="rounded-lg bg-parkga-600 px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-parkga-700 min-h-[44px] flex items-center"
             >
               Book Now
             </Link>
@@ -325,6 +325,7 @@ export default function ListingsPage() {
   const [loading, setLoading] = useState(true);
   const [selectedSpotId, setSelectedSpotId] = useState<string | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [showMobileMap, setShowMobileMap] = useState(false);
 
   // Map viewport bounds — updated on every pan/zoom
   const [mapBounds, setMapBounds] = useState<{
@@ -508,7 +509,7 @@ export default function ListingsPage() {
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col lg:flex-row">
       {/* ── Left Panel: Search + List ──────────────────────────────── */}
-      <div className="flex w-full flex-col border-b border-gray-200 lg:w-[420px] lg:shrink-0 lg:border-b-0 lg:border-r">
+      <div className={`flex w-full flex-col border-b border-gray-200 lg:w-[420px] lg:shrink-0 lg:border-b-0 lg:border-r ${showMobileMap ? "hidden lg:flex" : "flex"}`}>
         {/* Search header */}
         <div className="border-b border-gray-200 px-4 py-3">
           <div className="relative">
@@ -524,7 +525,7 @@ export default function ListingsPage() {
               <button
                 type="button"
                 onClick={() => setSearchQuery("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center justify-center min-h-[44px] min-w-[44px] text-gray-400 hover:text-gray-600"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -560,7 +561,7 @@ export default function ListingsPage() {
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="mt-0.5 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-xs text-gray-900 focus:border-parkga-500 focus:outline-none focus:ring-1 focus:ring-parkga-500/20"
+                className="mt-0.5 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-xs text-gray-900 focus:border-parkga-500 focus:outline-none focus:ring-1 focus:ring-parkga-500/20 min-h-[44px]"
               />
             </div>
             <div>
@@ -569,7 +570,7 @@ export default function ListingsPage() {
                 type="time"
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
-                className="mt-0.5 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-xs text-gray-900 focus:border-parkga-500 focus:outline-none focus:ring-1 focus:ring-parkga-500/20"
+                className="mt-0.5 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-xs text-gray-900 focus:border-parkga-500 focus:outline-none focus:ring-1 focus:ring-parkga-500/20 min-h-[44px]"
               />
             </div>
             <div>
@@ -578,7 +579,7 @@ export default function ListingsPage() {
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="mt-0.5 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-xs text-gray-900 focus:border-parkga-500 focus:outline-none focus:ring-1 focus:ring-parkga-500/20"
+                className="mt-0.5 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-xs text-gray-900 focus:border-parkga-500 focus:outline-none focus:ring-1 focus:ring-parkga-500/20 min-h-[44px]"
               />
             </div>
             <div>
@@ -587,7 +588,7 @@ export default function ListingsPage() {
                 type="time"
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
-                className="mt-0.5 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-xs text-gray-900 focus:border-parkga-500 focus:outline-none focus:ring-1 focus:ring-parkga-500/20"
+                className="mt-0.5 block w-full rounded-md border border-gray-300 px-2 py-1.5 text-xs text-gray-900 focus:border-parkga-500 focus:outline-none focus:ring-1 focus:ring-parkga-500/20 min-h-[44px]"
               />
             </div>
           </div>
@@ -601,7 +602,7 @@ export default function ListingsPage() {
             type="button"
             onClick={checkAvailability}
             disabled={checkingAvail}
-            className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg bg-parkga-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-parkga-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg bg-parkga-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-parkga-700 disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px]"
           >
             {checkingAvail ? (
               <Loader2 className="h-3 w-3 animate-spin" />
@@ -654,7 +655,7 @@ export default function ListingsPage() {
       </div>
 
       {/* ── Right Panel: Map ───────────────────────────────────────── */}
-      <div className="relative flex-1">
+      <div className={`relative flex-1 ${!showMobileMap ? "hidden md:block" : "block"}`}>
         {MAPBOX_TOKEN && MAPBOX_TOKEN !== "your_mapbox_token_here" ? (
           <Map
             mapboxAccessToken={MAPBOX_TOKEN}
@@ -706,7 +707,7 @@ export default function ListingsPage() {
                   >
                     <button
                       type="button"
-                      className="flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-bold text-gray-900 shadow-lg transition-all hover:scale-110 hover:bg-gray-900 hover:text-white hover:shadow-xl"
+                      className="flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-bold text-gray-900 shadow-lg transition-all hover:scale-110 hover:bg-gray-900 hover:text-white hover:shadow-xl min-h-[44px]"
                     >
                       {price}
                     </button>
@@ -728,6 +729,27 @@ export default function ListingsPage() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* ── Mobile Map/List Toggle FAB ──────────────────────────────── */}
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 md:hidden">
+        <button
+          type="button"
+          onClick={() => setShowMobileMap(!showMobileMap)}
+          className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white shadow-2xl transition-all hover:bg-gray-800 active:scale-95 min-h-[44px]"
+        >
+          {showMobileMap ? (
+            <>
+              <MapPin className="h-4 w-4" />
+              List
+            </>
+          ) : (
+            <>
+              <Navigation className="h-4 w-4" />
+              Map
+            </>
+          )}
+        </button>
       </div>
     </div>
   );

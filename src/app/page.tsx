@@ -180,8 +180,8 @@ export default function HomePage() {
 
         <div className="relative z-10 mx-auto w-full max-w-7xl px-4 py-20 sm:px-6 lg:py-32">
           <div className="mx-auto max-w-3xl text-center">
-            <div className="flex items-center justify-center h-[48px] sm:h-[56px] md:h-[72px] lg:h-[80px] xl:h-[96px]">
-              <h1 className="whitespace-nowrap text-xl font-extrabold tracking-tight text-white sm:text-2xl md:text-4xl lg:text-5xl xl:text-6xl">
+            <div className="flex items-center justify-center h-[56px] sm:h-[72px] md:h-[80px]">
+              <h1 className="whitespace-nowrap text-4xl font-extrabold tracking-tight text-white md:text-6xl">
                 Find Parking for{" "}
                 <span className="inline-block text-parkga-400">
                   {typedText}
@@ -190,16 +190,16 @@ export default function HomePage() {
               </h1>
             </div>
 
-            <p className="mt-4 text-sm leading-7 text-gray-300 sm:text-base sm:leading-8 md:mt-6 md:text-lg">
+            <p className="mt-3 leading-6 text-gray-300 text-xs sm:text-sm md:mt-6 md:text-lg md:leading-8">
               ParkGA is the peer-to-peer marketplace that connects drivers with
               affordable parking spots hosted by locals. Skip the expensive lots
               and park smarter.
             </p>
 
             {/* ── Pill-Shaped Search Bar ──────────────────────────────── */}
-            <div className="mt-6 md:mt-10">
-              <div className="mx-auto flex max-w-3xl items-center rounded-full bg-white p-2 shadow-2xl">
-                <div className="flex flex-1 items-center gap-2 px-4 py-2">
+            <div className="mt-4 md:mt-10">
+              <div className="mx-auto flex max-w-3xl flex-col md:flex-row items-stretch md:items-center rounded-xl md:rounded-full bg-white p-2 shadow-2xl gap-2 md:gap-0">
+                <div className="flex flex-1 items-center gap-2 px-4 py-3 md:py-2 rounded-lg md:rounded-none border md:border-0 border-gray-200">
                   <Search className="h-5 w-5 shrink-0 text-gray-400" />
                   <input
                     type="text"
@@ -207,23 +207,23 @@ export default function HomePage() {
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    className="w-full border-none bg-transparent text-sm text-gray-900 placeholder-gray-400 outline-none focus:outline-none"
+                    className="w-full border-none bg-transparent text-sm text-gray-900 placeholder-gray-400 outline-none focus:outline-none min-h-[44px]"
                   />
                 </div>
 
-                <div className="hidden h-8 w-px bg-gray-200 sm:block" />
+                <div className="hidden md:block h-8 w-px bg-gray-200" />
 
-                <div className="hidden flex-1 items-center gap-2 px-4 py-2 sm:flex">
+                <div className="flex md:flex-1 items-center gap-2 px-4 py-3 md:py-2 rounded-lg md:rounded-none border md:border-0 border-gray-200">
                   <Calendar className="h-5 w-5 shrink-0 text-gray-400" />
                   <span className="whitespace-nowrap text-sm text-gray-400">Add dates</span>
                 </div>
 
-                <div className="hidden h-8 w-px bg-gray-200 sm:block" />
+                <div className="hidden md:block h-8 w-px bg-gray-200" />
 
-                <div className="px-2">
+                <div className="px-0 md:px-2">
                   <button
                     onClick={handleSearch}
-                    className="flex cursor-pointer items-center gap-2 rounded-full bg-parkga-600 px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-parkga-700 hover:shadow-lg active:scale-95"
+                    className="flex w-full md:w-auto cursor-pointer items-center justify-center gap-2 rounded-full bg-parkga-600 px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-parkga-700 hover:shadow-lg active:scale-95 min-h-[44px]"
                   >
                     <Search className="h-4 w-4" />
                     <span>Search</span>

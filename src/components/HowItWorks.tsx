@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { motion, useScroll, useMotionValueEvent } from "framer-motion";
+import { motion, useScroll, useMotionValueEvent, useInView } from "framer-motion";
 
 /* ── Step Data ──────────────────────────────────────────────────────────── */
 const STEPS = [
@@ -94,8 +94,50 @@ function StepCard({
   );
 }
 
-/* ── How It Works Section ───────────────────────────────────────────────── */
-export default function HowItWorks() {
+/* ── Mobile Step Card (simpler, with spring-in animation) ─────────────── */
+function MobileStepCard({
+  step,
+  index,
+}: {
+  step: (typeof STEPS)[number];
+  index: number;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true, margin: "-80px" });
+
+  return (
+    <motion.div
+      ref={ref}
+      className="relative flex items-start gap-4 pl-8 pb-12 last:pb-0"
+      initial={{ opacity: 0, x: -30 }}
+      animate={isInView ? { opacity: 1, x: 0 } : {}}
+      transition={{ type: "spring", bounce: 0.5, duration: 0.8, delay: index * 0.15 }}
+    >
+      {/* 3D Image */}
+      <motion.img
+        src={step.image}
+        alt={step.title}
+        className="relative z-10 mt-1 h-10 w-10 shrink-0 object-contain drop-shadow-lg"
+        initial={{ scale: 0, rotate: -20 }}
+        animate={isInView ? { scale: 1, rotate: 0 } : {}}
+        transition={{ type: "spring", bounce: 0.6, duration: 0.8, delay: index * 0.15 + 0.2 }}
+      />
+
+      {/* Text content */}
+      <div className="min-w-0 flex-1 rounded-xl border border-gray-100 bg-white p-4 shadow-lg">
+        <h3 className="text-sm font-bold text-slate-900">
+          {step.title}
+        </h3>
+        <p className="mt-1.5 text-xs leading-relaxed text-slate-500">
+          {step.description}
+        </p>
+      </div>
+    </motion.div>
+  );
+}
+
+/* ── Desktop How It Works Section (scroll-driven SVG S-curve) ─────────── */
+function DesktopHowItWorks() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(-1);
 
@@ -177,5 +219,61 @@ export default function HowItWorks() {
         </div>
       </div>
     </section>
+  );
+}
+
+/* ── Mobile How It Works Section (no S-curve, stacked cards, green line) ─ */
+function MobileHowItWorks() {
+  return (
+    <section className="bg-white py-16 px-4">
+      {/* Title */}
+      <div className="text-center mb-10">
+        <h2 className="text-2xl font-bold tracking-tight text-slate-900">
+          How It Works
+        </h2>
+        <p className="mt-1 text-xs text-slate-500">
+          Three easy steps to park smarter
+        </p>
+      </div>
+
+      {/* Dot-pattern background */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.08]"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle, #00B370 0.75px, transparent 0.75px)",
+          backgroundSize: "24px 24px",
+        }}
+      />
+
+      {/* Vertical cards with green line */}
+      <div className="relative mx-auto max-w-md">
+        {/* Straight vertical green line */}
+        <div className="absolute left-[19px] top-1 bottom-6 w-0.5 bg-green-200" />
+        <div className="absolute left-[19px] top-1 w-0.5 bg-green-500 animate-mobile-line-grow" />
+
+        {STEPS.map((step, i) => (
+          <MobileStepCard key={step.title} step={step} index={i} />
+        ))}
+      </div>
+
+    </section>
+  );
+}
+
+/* ── How It Works Section ───────────────────────────────────────────────── */
+export default function HowItWorks() {
+  return (
+    <>
+      {/* Desktop version with S-curve SVG */}
+      <div className="hidden md:block">
+        <DesktopHowItWorks />
+      </div>
+
+      {/* Mobile version: stacked cards with straight green line */}
+      <div className="block md:hidden">
+        <MobileHowItWorks />
+      </div>
+    </>
   );
 }

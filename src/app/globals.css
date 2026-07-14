@@ -105,3 +105,20 @@
 .mapboxgl-popup {
   max-width: none !important;
 }
+
+/*
+ * ── Mobile How It Works Green Line Grow ─────────────────────────────────
+ * Animated straight green line for the mobile How It Works section.
+ */
+@keyframes mobile-line-grow {
+  0% {
+    height: 0%;
+  }
+  100% {
+    height: calc(100% - 24px);
+  }
+}
+
+.animate-mobile-line-grow {
+  animation: mobile-line-grow 1.5s ease-out forwards;
+}
