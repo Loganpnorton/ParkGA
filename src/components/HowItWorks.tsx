@@ -108,7 +108,7 @@ function MobileStepCard({
   return (
     <motion.div
       ref={ref}
-      className="relative flex items-start gap-4 pl-8 pb-12 last:pb-0"
+      className="relative flex flex-col md:flex-row items-start md:items-center gap-4 pl-8 pb-12 last:pb-0"
       initial={{ opacity: 0, x: -30 }}
       animate={isInView ? { opacity: 1, x: 0 } : {}}
       transition={{ type: "spring", bounce: 0.5, duration: 0.8, delay: index * 0.15 }}
@@ -117,7 +117,7 @@ function MobileStepCard({
       <motion.img
         src={step.image}
         alt={step.title}
-        className="relative z-10 mt-1 h-10 w-10 shrink-0 object-contain drop-shadow-lg"
+        className="relative z-10 flex-shrink-0 w-16 h-16 md:w-32 md:h-32 mb-4 md:mb-0 object-contain drop-shadow-lg"
         initial={{ scale: 0, rotate: -20 }}
         animate={isInView ? { scale: 1, rotate: 0 } : {}}
         transition={{ type: "spring", bounce: 0.6, duration: 0.8, delay: index * 0.15 + 0.2 }}

@@ -19,9 +19,9 @@ export interface TrendingSpot {
 
 /* ── Fallback Images ──────────────────────────────────────────────────── */
 const FALLBACK_IMAGES = [
-  "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=600&q=80",
-  "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=80",
-  "https://images.unsplash.com/photo-1506521781265-d8422e82f816?w=600&q=80",
+  "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&q=80",
+  "https://images.unsplash.com/photo-1506521781263-d8422e82f27a?w=800&q=80",
+  "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
 ];
 
 /** Force every spot to have an image — DB empty arrays get fallbacks.     */

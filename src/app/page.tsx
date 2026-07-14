@@ -180,10 +180,10 @@ export default function HomePage() {
 
         <div className="relative z-10 mx-auto w-full max-w-7xl px-4 py-20 sm:px-6 lg:py-32">
           <div className="mx-auto max-w-3xl text-center">
-            <div className="flex items-center justify-center h-[56px] sm:h-[72px] md:h-[80px]">
-              <h1 className="whitespace-nowrap text-4xl font-extrabold tracking-tight text-white md:text-6xl">
+            <div className="flex items-center justify-center h-[56px] sm:h-[72px] md:h-[80px] break-words whitespace-normal">
+              <h1 className="text-4xl font-bold leading-tight flex-wrap text-white md:text-6xl">
                 Find Parking for{" "}
-                <span className="inline-block text-parkga-400">
+                <span className="inline-block text-parkga-400 break-words">
                   {typedText}
                   <span className="animate-cursor ml-0.5 font-light text-parkga-400">|</span>
                 </span>
@@ -276,7 +276,7 @@ export default function HomePage() {
                 </a>
                 <a
                   href="/auth/signup"
-                  className="inline-flex items-center gap-2 rounded-xl border border-brand-500/30 px-8 py-4 text-base font-semibold text-brand-100 transition-all duration-300 hover:border-brand-500/60 hover:bg-white/5"
+                  className="inline-flex items-center gap-2 rounded-xl bg-transparent border-2 border-white px-8 py-4 text-base font-semibold text-white transition-all duration-300 hover:bg-white hover:text-green-900"
                 >
                   Create an Account
                 </a>
