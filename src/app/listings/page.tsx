@@ -507,9 +507,9 @@ export default function ListingsPage() {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] flex-col lg:flex-row">
+    <div className="flex h-[calc(100vh-4rem)] flex-col lg:flex-row">
       {/* ── Left Panel: Search + List ──────────────────────────────── */}
-      <div className={`flex w-full flex-col border-b border-gray-200 lg:w-[420px] lg:shrink-0 lg:border-b-0 lg:border-r ${showMobileMap ? "hidden lg:flex" : "flex"}`}>
+      <div className={`flex w-full flex-col border-b border-gray-200 lg:w-[420px] lg:shrink-0 lg:border-b-0 lg:border-r ${showMobileMap ? "hidden lg:flex" : "flex"} flex-1 lg:flex-none`}>
         {/* Search header */}
         <div className="border-b border-gray-200 px-4 py-3">
           <div className="relative">
@@ -655,7 +655,7 @@ export default function ListingsPage() {
       </div>
 
       {/* ── Right Panel: Map ───────────────────────────────────────── */}
-      <div className={`relative ${!showMobileMap ? "hidden md:block flex-1" : "block h-[calc(100vh-4rem)] md:flex-1 md:h-auto"}`}>
+      <div className={`relative ${!showMobileMap ? "hidden md:block flex-1" : "block h-[calc(100vh-4rem)] lg:flex-1 lg:h-auto"}`}>
         {MAPBOX_TOKEN && MAPBOX_TOKEN !== "your_mapbox_token_here" ? (
           <Map
             mapboxAccessToken={MAPBOX_TOKEN}
