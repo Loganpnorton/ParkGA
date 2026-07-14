@@ -625,7 +625,7 @@ export default function ListingsPage() {
         </div>
 
         {/* Scrollable list */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 pb-20">
+        <div className="flex-1 overflow-y-auto px-4 py-4 pb-32">
           {filteredSpots.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Search className="h-10 w-10 text-gray-300" />
