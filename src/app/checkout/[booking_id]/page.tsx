@@ -18,19 +18,16 @@ import {
   Check,
   ChevronLeft,
   AlertCircle,
-  CreditCard,
   MapPin,
   Calendar,
   Clock,
   Shield,
   Mail,
   Phone,
-  Car,
   Star,
   ChevronDown,
   ChevronRight,
   XCircle,
-  PencilLine,
 } from "lucide-react";
 
 const stripePublishableKey =
@@ -38,7 +35,7 @@ const stripePublishableKey =
 const stripePromise = loadStripe(stripePublishableKey);
 const supabase = createClient();
 
-// ─── Types ─────────────────────────────────────────────────────────────
+// --- Types -------------------------------------------------------------
 
 interface BookingWithSpot {
   id: string;
@@ -76,7 +73,7 @@ interface VehicleInfo {
   licensePlate: string;
 }
 
-// ─── Formatting helpers ────────────────────────────────────────────────
+// --- Formatting helpers ------------------------------------------------
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString("en-US", {
@@ -107,7 +104,7 @@ function getCancelDate(endTime: string): string {
   return formatDate(d.toISOString());
 }
 
-// ─── Accordion Section Wrapper ─────────────────────────────────────────
+// --- Accordion Section Wrapper -----------------------------------------
 
 function AccordionCard({
   step,
@@ -181,7 +178,7 @@ function AccordionCard({
   );
 }
 
-// ─── Payment Form ──────────────────────────────────────────────────────
+// --- Payment Form ------------------------------------------------------
 
 function PaymentFormContent({
   booking,
@@ -262,7 +259,7 @@ function PaymentFormContent({
         ) : (
           <>
             <LockIcon className="h-4 w-4" />
-            Confirm & Pay — ${booking.total_price.toFixed(2)}
+            Confirm & Pay - ${booking.total_price.toFixed(2)}
           </>
         )}
       </button>
@@ -293,7 +290,7 @@ function LockIcon({ className }: { className?: string }) {
   );
 }
 
-// ─── Star Rating Display ───────────────────────────────────────────────
+// --- Star Rating Display -----------------------------------------------
 
 function StarRatingDisplay({ rating }: { rating: number }) {
   return (
@@ -310,7 +307,7 @@ function StarRatingDisplay({ rating }: { rating: number }) {
   );
 }
 
-// ─── Main Checkout Page ────────────────────────────────────────────────
+// --- Main Checkout Page ------------------------------------------------
 
 export default function CheckoutPage() {
   const params = useParams();
@@ -326,11 +323,11 @@ export default function CheckoutPage() {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paid, setPaid] = useState(false);
 
-  // ── Editable contact fields ─────────────────────────────────────────
+  // -- Editable contact fields -----------------------------------------
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
 
-  // ── Vehicle info fields ─────────────────────────────────────────────
+  // -- Vehicle info fields ---------------------------------------------
   const [vehicle, setVehicle] = useState<VehicleInfo>({
     make: "",
     model: "",
@@ -338,7 +335,7 @@ export default function CheckoutPage() {
     licensePlate: "",
   });
 
-  // ── Accordion state ─────────────────────────────────────────────────
+  // -- Accordion state -------------------------------------------------
   type Section = "contact" | "payment" | "vehicle";
   const [openSection, setOpenSection] = useState<Section>("contact");
 
@@ -350,7 +347,7 @@ export default function CheckoutPage() {
   // Derived: is contact info valid?
   const isContactValid = email.trim().length > 0 && phone.trim().length > 0;
 
-  // ── Initialize from fetched profile ─────────────────────────────────
+  // -- Initialize from fetched profile ---------------------------------
   useEffect(() => {
     if (profile) {
       setEmail(profile.email);
@@ -358,7 +355,7 @@ export default function CheckoutPage() {
     }
   }, [profile]);
 
-  // ── Initialization ──────────────────────────────────────────────────
+  // -- Initialization --------------------------------------------------
   useEffect(() => {
     let cancelled = false;
 
@@ -479,7 +476,7 @@ export default function CheckoutPage() {
     };
   }, [bookingId, router]);
 
-  // ── Save profile changes to Supabase ────────────────────────────────
+  // -- Save profile changes to Supabase --------------------------------
   const saveContactToProfile = useCallback(async () => {
     if (!profile?.id) return;
     // Only save if phone actually changed from what's in the DB
@@ -490,9 +487,9 @@ export default function CheckoutPage() {
       .from("profiles")
       .update({ phone: phone || null, updated_at: new Date().toISOString() })
       .eq("id", profile.id);
-  }, [profile, phone, supabase]);
+  }, [profile, phone]);
 
-  // ── Handle "Continue" from contact info ─────────────────────────────
+  // -- Handle "Continue" from contact info -----------------------------
   function handleContactContinue() {
     if (!isContactValid) return;
     setContactComplete(true);
@@ -500,7 +497,7 @@ export default function CheckoutPage() {
     setOpenSection("payment");
   }
 
-  // ── Handle successful payment (advance to vehicle, don't redirect) ─
+  // -- Handle successful payment (advance to vehicle, don't redirect) -
   function handlePaymentComplete() {
     setPaymentComplete(true);
     setOpenSection("vehicle");
@@ -510,12 +507,12 @@ export default function CheckoutPage() {
     });
   }
 
-  // ── Final redirect to dashboard ─────────────────────────────────────
+  // -- Final redirect to dashboard -------------------------------------
   function goToDashboard() {
     router.push("/dashboard");
   }
 
-  // ── Handle vehicle save ─────────────────────────────────────────────
+  // -- Handle vehicle save ---------------------------------------------
   function handleVehicleSave() {
     setVehicleComplete(true);
     toast.success("Booking confirmed! 🎉", {
@@ -526,7 +523,7 @@ export default function CheckoutPage() {
     goToDashboard();
   }
 
-  // ── Handle skip vehicle ─────────────────────────────────────────────
+  // -- Handle skip vehicle ---------------------------------------------
   function handleSkipVehicle() {
     setVehicleComplete(true);
     toast.success("Booking confirmed! 🎉", {
@@ -537,7 +534,7 @@ export default function CheckoutPage() {
     goToDashboard();
   }
 
-  // ── Loading state ───────────────────────────────────────────────────
+  // -- Loading state ---------------------------------------------------
   if (loading) {
     return (
       <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
@@ -546,7 +543,7 @@ export default function CheckoutPage() {
     );
   }
 
-  // ── Error state ─────────────────────────────────────────────────────
+  // -- Error state -----------------------------------------------------
   if (error) {
     return (
       <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center px-4">
@@ -569,7 +566,7 @@ export default function CheckoutPage() {
     );
   }
 
-  // ── Already paid ────────────────────────────────────────────────────
+  // -- Already paid ----------------------------------------------------
   if (paid) {
     return (
       <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-12">
@@ -603,7 +600,7 @@ export default function CheckoutPage() {
     );
   }
 
-  // ── Render Split-Screen Checkout ────────────────────────────────────
+  // -- Render Split-Screen Checkout ------------------------------------
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Thin top bar */}
@@ -681,7 +678,7 @@ export default function CheckoutPage() {
                   {/* SMS reminder note */}
                   <div className="rounded-lg bg-parkga-50 px-3 py-2.5">
                     <p className="text-xs text-parkga-700">
-                      <span className="font-medium">SMS reminders:</span> We'll
+                      <span className="font-medium">SMS reminders:</span> We&apos;ll
                       send you a text reminder before your reservation starts.
                       Manage notification preferences in your dashboard.
                     </p>
@@ -946,7 +943,7 @@ export default function CheckoutPage() {
                           <span className="font-medium text-gray-900">
                             {formatTime(booking.start_time)}
                           </span>
-                          <span className="mx-1 text-gray-300">—</span>
+                          <span className="mx-1 text-gray-300">-</span>
                           <span className="font-medium text-gray-900">
                             {formatTime(booking.end_time)}
                           </span>

@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import Stripe from "stripe";
 import { createClient } from "@/lib/supabase/server";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "", {
-  apiVersion: "2026-06-24.dahlia",
-});
+import { getStripeClient } from "@/lib/stripe/client";
 
 const PLATFORM_FEE_PERCENT = 0.15; // 15% platform fee
 const ORIGIN =
@@ -12,7 +8,8 @@ const ORIGIN =
 
 export async function POST(req: NextRequest) {
   try {
-    // ── 1. Authenticate ─────────────────────────────────────────────
+    const stripe = getStripeClient();
+    // -- 1. Authenticate ---------------------------------------------
     const supabase = await createClient();
     const {
       data: { user },
@@ -26,7 +23,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ── 2. Parse request body ───────────────────────────────────────
+    // -- 2. Parse request body ---------------------------------------
     const body = await req.json();
     const { spot_id, start_time, end_time } = body as {
       spot_id: string;
@@ -41,7 +38,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ── 3. Fetch spot + host profile ────────────────────────────────
+    // -- 3. Fetch spot + host profile --------------------------------
     const { data: spot, error: spotError } = await supabase
       .from("spots")
       .select("*, host_id")
@@ -71,7 +68,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ── 4. Calculate price ──────────────────────────────────────────
+    // -- 4. Calculate price ------------------------------------------
     const start = new Date(start_time);
     const end = new Date(end_time);
     const hours =
@@ -101,7 +98,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ── 5. Create Checkout Session (Destination Charge) ─────────────
+    // -- 5. Create Checkout Session (Destination Charge) -------------
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       payment_intent_data: {
@@ -128,8 +125,8 @@ export async function POST(req: NextRequest) {
               name: spot.title ?? "Parking Spot",
               description:
                 spot.price_per_event && hours <= 24
-                  ? `${spot.address ?? ""} — Event Parking`
-                  : `${spot.address ?? ""} — ${hours.toFixed(1)} hrs`,
+                  ? `${spot.address ?? ""} - Event Parking`
+                  : `${spot.address ?? ""} - ${hours.toFixed(1)} hrs`,
               metadata: {
                 spot_id,
               },
@@ -151,7 +148,7 @@ export async function POST(req: NextRequest) {
       cancel_url: `${ORIGIN}/listings/${spot_id}?checkout=cancel`,
     });
 
-    // ── 6. Create booking in pending status ─────────────────────────
+    // -- 6. Create booking in pending status -------------------------
     const { error: bookingError } = await supabase.from("bookings").insert({
       spot_id,
       guest_id: user.id,
@@ -165,10 +162,10 @@ export async function POST(req: NextRequest) {
 
     if (bookingError) {
       console.error("Failed to create booking:", bookingError);
-      // Non-fatal — stripe session is created
+      // Non-fatal - stripe session is created
     }
 
-    // ── 7. Return session URL ───────────────────────────────────────
+    // -- 7. Return session URL ---------------------------------------
     return NextResponse.json({
       url: session.url,
       session_id: session.id,

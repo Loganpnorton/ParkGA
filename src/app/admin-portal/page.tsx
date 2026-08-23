@@ -12,13 +12,11 @@ import {
   XCircle,
   RefreshCw,
   Shield,
-  BarChart3,
   Calendar,
-  Clock,
 } from "lucide-react";
 import Link from "next/link";
 
-// ─── Types ─────────────────────────────────────────────────────────────
+// --- Types -------------------------------------------------------------
 interface AdminStats {
   totalUsers: number;
   activeSpots: number;
@@ -42,6 +40,17 @@ interface SpotRow {
   host_name?: string;
 }
 
+interface AdminSpotQueryRow {
+  id: string;
+  title: string;
+  address: string;
+  host_id: string;
+  active: boolean | null;
+  price_per_hour: number | null;
+  price_per_event: number | null;
+  host: { name: string | null } | null;
+}
+
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -63,7 +72,7 @@ export default function AdminPortalPage() {
     setError(null);
 
     try {
-      // ── Aggregate Stats ──────────────────────────────────────
+      // -- Aggregate Stats --------------------------------------
       const { count: totalUsers } = await supabase
         .from("profiles")
         .select("*", { count: "exact", head: true });
@@ -97,7 +106,7 @@ export default function AdminPortalPage() {
         .select("*", { count: "exact", head: true })
         .in("status", ["confirmed", "active", "completed"]);
 
-      // ── Revenue: SUM(total_price * 0.15) from paid bookings ──
+      // -- Revenue: SUM(total_price * 0.15) from paid bookings --
       const { data: revenueData } = await supabase
         .from("bookings")
         .select("total_price")
@@ -120,7 +129,7 @@ export default function AdminPortalPage() {
         guestCount: guestCount ?? 0,
       });
 
-      // ── All Spots for Moderation ─────────────────────────────
+      // -- All Spots for Moderation -----------------------------
       const { data: spotData } = await supabase
         .from("spots")
         .select("*, host:host_id(name)")
@@ -140,7 +149,7 @@ export default function AdminPortalPage() {
         }
 
         setSpots(
-          spotData.map((s: any) => ({
+          (spotData as unknown as AdminSpotQueryRow[]).map((s) => ({
             id: s.id,
             title: s.title,
             address: s.address,
@@ -153,8 +162,8 @@ export default function AdminPortalPage() {
           })),
         );
       }
-    } catch (err: any) {
-      setError(err.message ?? "Failed to load admin data");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load admin data");
     }
 
     setLoading(false);
@@ -164,7 +173,7 @@ export default function AdminPortalPage() {
     fetchData();
   }, [fetchData]);
 
-  // ── Toggle spot active status ────────────────────────────────
+  // -- Toggle spot active status --------------------------------
   async function toggleSpotActive(spotId: string, currentlyActive: boolean) {
     setTogglingSpot(spotId);
     setError(null);
@@ -420,7 +429,7 @@ export default function AdminPortalPage() {
   );
 }
 
-// ─── Stat Card Component ───────────────────────────────────────────────
+// --- Stat Card Component -----------------------------------------------
 function StatCard({
   icon,
   label,

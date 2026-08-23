@@ -11,10 +11,10 @@ import TrendingCarousel, {
   enforceSpotImages,
 } from "@/components/TrendingCarousel";
 
-/* ── Types ────────────────────────────────────────────────────────────── */
+/* -- Types -------------------------------------------------------------- */
 /* (TrendingSpot is now imported from TrendingCarousel)                    */
 
-/* ── Typing Effect Hook ───────────────────────────────────────────── */
+/* -- Typing Effect Hook --------------------------------------------- */
 function useTypingEffect(
   words: string[],
   typingSpeed = 100,
@@ -57,7 +57,7 @@ function useTypingEffect(
 
 const CYCLING_WORDS = ["Braves Games.", "The BeltLine.", "UGA Tailgates.", "Georgia."];
 
-/* ── Trending Spots Section ────────────────────────────────────────── */
+/* -- Trending Spots Section ------------------------------------------ */
 function TrendingSpotsSection() {
   const [spots, setSpots] = useState<TrendingSpot[]>([]);
   const [loading, setLoading] = useState(true);
@@ -147,7 +147,7 @@ function TrendingSpotsSection() {
 }
 
 
-/* ── Home Page ──────────────────────────────────────────────────────── */
+/* -- Home Page -------------------------------------------------------- */
 export default function HomePage() {
   const router = useRouter();
   const typedText = useTypingEffect(CYCLING_WORDS);
@@ -166,7 +166,7 @@ export default function HomePage() {
 
   return (
     <>
-      {/* ── Hero Section ─────────────────────────────────────────────── */}
+      {/* -- Hero Section ----------------------------------------------- */}
       <section className="relative flex min-h-[90vh] items-center overflow-hidden bg-gray-900">
         {/* Background image with Ken Burns effect + dark overlay */}
         <div
@@ -196,7 +196,7 @@ export default function HomePage() {
               and park smarter.
             </p>
 
-            {/* ── Pill-Shaped Search Bar ──────────────────────────────── */}
+            {/* -- Pill-Shaped Search Bar -------------------------------- */}
             <div className="mt-4 md:mt-10">
               <div className="mx-auto flex max-w-3xl flex-col md:flex-row items-stretch md:items-center rounded-xl md:rounded-full bg-white p-2 shadow-2xl gap-2 md:gap-0">
                 <div className="flex flex-1 items-center gap-2 px-4 py-3 md:py-2 rounded-lg md:rounded-none border md:border-0 border-gray-200">
@@ -237,20 +237,20 @@ export default function HomePage() {
         <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white to-transparent" />
       </section>
 
-      {/* ── Trending Spots Section ─────────────────────────────────────── */}
+      {/* -- Trending Spots Section --------------------------------------- */}
       <TrendingSpotsSection />
 
-      {/* ── How It Works Section (sticky-scroll) ──────────────────────────── */}
+      {/* -- How It Works Section (sticky-scroll) ---------------------------- */}
       <HowItWorks />
 
-      {/* ── Diffused transition: white → brand-900 ───────────────────────── */}
+      {/* -- Diffused transition: white → brand-900 ------------------------- */}
       <div className="h-24 bg-gradient-to-b from-white via-white/60 to-brand-900" />
 
-      {/* ── Unified Host + CTA Block ─────────────────────────────────────── */}
+      {/* -- Unified Host + CTA Block --------------------------------------- */}
       <section className="bg-brand-900">
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
           <div className="flex flex-col items-center gap-12 md:flex-row md:gap-16">
-            {/* Left — Content */}
+            {/* Left - Content */}
             <div className="w-full text-center md:w-1/2 md:text-left">
               <p className="text-sm font-semibold uppercase tracking-widest text-parkga-300">
                 Become a Host
@@ -305,7 +305,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Right — Image */}
+            {/* Right - Image */}
             <div className="w-full md:w-1/2">
               <div className="overflow-hidden rounded-2xl shadow-2xl shadow-brand-950/50">
                 <div
@@ -317,13 +317,13 @@ export default function HomePage() {
                 />
               </div>
               <p className="mt-3 text-center text-xs text-brand-200/40 md:text-left">
-                A typical Atlanta driveway — ready to earn.
+                A typical Atlanta driveway - ready to earn.
               </p>
             </div>
           </div>
         </div>
 
-        {/* ── Bottom transition: seamless into footer's brand-900 ── */}
+        {/* -- Bottom transition: seamless into footer's brand-900 -- */}
         <div className="h-8" />
       </section>
     </>

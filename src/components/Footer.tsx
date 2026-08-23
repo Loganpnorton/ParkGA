@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 const footerLinks = {
   product: {
@@ -38,9 +39,11 @@ export default function Footer() {
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
             <Link href="/">
-              <img
+              <Image
                 src="/logo-full.png"
                 alt="ParkGA Logo"
+                width={200}
+                height={48}
                 className="h-6 md:h-8 w-auto object-contain drop-shadow-sm hover:scale-105 transition-transform duration-200"
               />
             </Link>

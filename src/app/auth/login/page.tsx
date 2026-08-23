@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -42,9 +43,11 @@ export default function LoginPage() {
         {/* Header */}
         <div className="mb-8 text-center">
           <Link href="/" className="inline-block">
-            <img
+            <Image
               src="/logo-full.png"
               alt="ParkGA Logo"
+              width={200}
+              height={48}
               className="mx-auto h-8 md:h-10 w-auto object-contain drop-shadow-sm hover:scale-105 transition-transform duration-200"
             />
           </Link>
@@ -148,7 +151,7 @@ export default function LoginPage() {
 
         {/* Sign Up Link */}
         <p className="mt-6 text-center text-sm text-gray-600">
-          Don't have an account?{" "}
+          Don&apos;t have an account?{" "}
           <Link
             href="/auth/signup"
             className="font-semibold text-parkga-600 hover:text-parkga-700"

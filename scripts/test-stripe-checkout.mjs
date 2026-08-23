@@ -26,7 +26,7 @@ const PLATFORM_FEE_PERCENT = 0.15;
 console.log("\n🧪 Testing Stripe Checkout Session with Connect Fee Split\n");
 
 async function run() {
-  // ── 1. Create or reuse a test connected account ──────────────────
+  // -- 1. Create or reuse a test connected account ------------------
   let connectedAccountId;
   try {
     console.log("📦 Creating test Express connected account...");
@@ -49,7 +49,7 @@ async function run() {
     throw err;
   }
 
-  // ── 2. Create a test price / product ─────────────────────────────
+  // -- 2. Create a test price / product -----------------------------
   const totalAmountCents = 2000; // $20.00
   const feeCents = Math.round(totalAmountCents * PLATFORM_FEE_PERCENT); // $3.00
   const hostReceivesCents = totalAmountCents - feeCents; // $17.00
@@ -59,7 +59,7 @@ async function run() {
   console.log(`   Platform fee (15%): $${(feeCents / 100).toFixed(2)}`);
   console.log(`   Host receives:      $${(hostReceivesCents / 100).toFixed(2)}\n`);
 
-  // ── 3. Create Checkout Session (destination charge) ──────────────
+  // -- 3. Create Checkout Session (destination charge) --------------
   console.log("🔗 Creating Checkout Session...");
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
@@ -85,7 +85,7 @@ async function run() {
           currency: "usd",
           product_data: {
             name: "Covered Driveway - 5 min walk to Truist Park",
-            description: "123 Main St, Atlanta — 4.0 hrs",
+            description: "123 Main St, Atlanta - 4.0 hrs",
           },
           unit_amount: totalAmountCents,
         },
@@ -109,7 +109,7 @@ async function run() {
   console.log(`   ✅ Payment Status: ${session.payment_status}`);
   console.log(`   ✅ URL: ${session.url}\n`);
 
-  // ── 4. Verify split payment data on the PaymentIntent ────────────
+  // -- 4. Verify split payment data on the PaymentIntent ------------
   console.log("🔍 Verifying PaymentIntent...");
   const paymentIntent = await stripe.paymentIntents.retrieve(
     session.payment_intent?.toString() ?? "",
@@ -121,7 +121,7 @@ async function run() {
   console.log(`   ✅ Transfer data destination: ${paymentIntent.transfer_data?.destination}`);
   console.log(`   ✅ Metadata: ${JSON.stringify(paymentIntent.metadata)}\n`);
 
-  // ── Verify the math ──────────────────────────────────────────────
+  // -- Verify the math ----------------------------------------------
   const actualFee = paymentIntent.application_fee_amount ?? 0;
   const actualTotal = paymentIntent.amount;
   const actualHostShare = actualTotal - actualFee;
@@ -142,7 +142,7 @@ async function run() {
     process.exit(1);
   }
 
-  // ── 5. Cleanup: delete test account ──────────────────────────────
+  // -- 5. Cleanup: delete test account ------------------------------
   console.log("🧹 Cleaning up test account...");
   await stripe.accounts.del(connectedAccountId);
   console.log("   ✅ Test account deleted.\n");

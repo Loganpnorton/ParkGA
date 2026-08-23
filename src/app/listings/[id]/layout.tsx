@@ -39,7 +39,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         ? `$${spot.price_per_event}/event`
         : null;
 
-    const title = `${spot.title} — ParkGA`;
+    const title = `${spot.title} - ParkGA`;
     const description = priceDisplay
       ? `Book "${spot.title}" from ${priceDisplay} on ParkGA. ${spot.description?.slice(0, 120) ?? ""}`
       : spot.description?.slice(0, 160) ?? "Book a parking spot on ParkGA.";

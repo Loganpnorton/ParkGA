@@ -8,7 +8,6 @@ import dynamic from "next/dynamic";
 import {
   MapPin,
   Clock,
-  DollarSign,
   Car,
   Star,
   User,
@@ -17,7 +16,6 @@ import {
   Calendar,
   Shield,
   Check,
-  Send,
   AlertCircle,
   Navigation,
 } from "lucide-react";
@@ -36,7 +34,7 @@ const Marker = dynamic(
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
 
-// ─── Types ─────────────────────────────────────────────────────────────
+// --- Types -------------------------------------------------------------
 interface Spot {
   id: string;
   host_id: string;
@@ -87,7 +85,7 @@ function formatDate(dateStr: string) {
   });
 }
 
-// ─── Star Rating ───────────────────────────────────────────────────────
+// --- Star Rating -------------------------------------------------------
 function StarRating({ rating }: { rating: number }) {
   return (
     <div className="flex items-center gap-0.5">
@@ -103,7 +101,7 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
-// ─── Main Page ─────────────────────────────────────────────────────────
+// --- Main Page ---------------------------------------------------------
 export default function SpotDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -125,9 +123,8 @@ export default function SpotDetailPage() {
   const [endTime, setEndTime] = useState("");
   const [bookError, setBookError] = useState<string | null>(null);
   const [booking, setBooking] = useState(false);
-  const [bookSuccess, setBookSuccess] = useState(false);
 
-  // ── Fetch data ───────────────────────────────────────────────────
+  // -- Fetch data ---------------------------------------------------
   useEffect(() => {
     async function fetchData() {
       if (!id) return;
@@ -189,7 +186,7 @@ export default function SpotDetailPage() {
     fetchData();
   }, [id, supabase, router]);
 
-  // ── Price calculation ────────────────────────────────────────────
+  // -- Price calculation --------------------------------------------
   const totalPrice = useMemo(() => {
     if (bookingMode === "event") {
       return spot?.price_per_event ?? 0;
@@ -214,7 +211,7 @@ export default function SpotDetailPage() {
     return Math.round(((end.getTime() - start.getTime()) / (1000 * 60 * 60)) * 10) / 10;
   }, [bookingMode, startDate, startTime, endDate, endTime]);
 
-  // ── Book handler (create pending booking, redirect to checkout) ─
+  // -- Book handler (create pending booking, redirect to checkout) -
   async function handleBook() {
     setBookError(null);
 
@@ -300,7 +297,7 @@ export default function SpotDetailPage() {
     }
   }
 
-  // ── Loading ──────────────────────────────────────────────────────
+  // -- Loading ------------------------------------------------------
   if (loading) {
     return (
       <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
@@ -336,42 +333,7 @@ export default function SpotDetailPage() {
         ) / 10
       : null;
 
-  // ── Success ──────────────────────────────────────────────────────
-  if (bookSuccess) {
-    return (
-      <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-12">
-        <div className="w-full max-w-md text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-parkga-100">
-            <Check className="h-8 w-8 text-parkga-600" />
-          </div>
-          <h1 className="mt-6 text-3xl font-bold tracking-tight text-gray-900">
-            Booking Requested!
-          </h1>
-          <p className="mt-3 text-sm text-gray-600">
-            Your booking for{" "}
-            <span className="font-semibold">{spot.title}</span> has been
-            submitted. Check your dashboard for updates.
-          </p>
-          <div className="mt-8 flex items-center justify-center gap-4">
-            <Link
-              href="/dashboard"
-              className="rounded-lg bg-parkga-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-parkga-700"
-            >
-              Go to Dashboard
-            </Link>
-            <Link
-              href="/listings"
-              className="rounded-lg border border-gray-300 px-6 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
-            >
-              Browse More
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ─── Render ─────────────────────────────────────────────────────
+  // --- Render -----------------------------------------------------
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
       {/* Back link */}
@@ -384,7 +346,7 @@ export default function SpotDetailPage() {
       </Link>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-        {/* ── Left Column: Images + Details + Reviews ─────────────── */}
+        {/* -- Left Column: Images + Details + Reviews --------------- */}
         <div className="lg:col-span-2 space-y-8">
           {/* Image Gallery */}
           <div>
@@ -619,7 +581,7 @@ export default function SpotDetailPage() {
           </div>
         </div>
 
-        {/* ── Right Column: Sticky Booking Widget ─────────────────── */}
+        {/* -- Right Column: Sticky Booking Widget ------------------- */}
         <div className="lg:col-span-1">
           <div className="sticky top-24 space-y-4">
             <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
@@ -790,7 +752,7 @@ export default function SpotDetailPage() {
                     {bookingMode === "event"
                       ? "Book Event"
                       : totalPrice > 0
-                        ? `Book — $${totalPrice.toFixed(2)}`
+                        ? `Book - $${totalPrice.toFixed(2)}`
                         : "Select time to book"}
                   </>
                 )}

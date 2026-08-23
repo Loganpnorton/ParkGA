@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import Stripe from "stripe";
 import { createClient } from "@/lib/supabase/server";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "", {
-  apiVersion: "2026-06-24.dahlia",
-});
+import { getStripeClient } from "@/lib/stripe/client";
 
 const PLATFORM_FEE_PERCENT = 0.15; // 15% platform fee
 
@@ -18,7 +14,8 @@ const PLATFORM_FEE_PERCENT = 0.15; // 15% platform fee
  */
 export async function POST(req: NextRequest) {
   try {
-    // ── 1. Authenticate ─────────────────────────────────────────────
+    const stripe = getStripeClient();
+    // -- 1. Authenticate ---------------------------------------------
     const supabase = await createClient();
     const {
       data: { user },
@@ -32,7 +29,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ── 2. Parse request body ───────────────────────────────────────
+    // -- 2. Parse request body ---------------------------------------
     const body = await req.json();
     const { booking_id } = body as { booking_id: string };
 
@@ -43,7 +40,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ── 3. Fetch booking ────────────────────────────────────────────
+    // -- 3. Fetch booking --------------------------------------------
     const { data: booking, error: bookingError } = await supabase
       .from("bookings")
       .select("*")
@@ -66,7 +63,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (booking.payment_intent_id) {
-      // Booking already has a PaymentIntent — return its client_secret
+      // Booking already has a PaymentIntent - return its client_secret
       try {
         const existingPi = await stripe.paymentIntents.retrieve(
           booking.payment_intent_id,
@@ -79,7 +76,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // ── 4. Fetch spot + host profile ────────────────────────────────
+    // -- 4. Fetch spot + host profile --------------------------------
     const { data: spot, error: spotError } = await supabase
       .from("spots")
       .select("*, host_id")
@@ -109,7 +106,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ── 5. Calculate price ──────────────────────────────────────────
+    // -- 5. Calculate price ------------------------------------------
     const start = new Date(booking.start_time);
     const end = new Date(booking.end_time);
     const hours =
@@ -138,7 +135,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ── 6. Create PaymentIntent (Destination Charge) ────────────────
+    // -- 6. Create PaymentIntent (Destination Charge) ----------------
     const paymentIntent = await stripe.paymentIntents.create({
       amount: totalAmountCents,
       currency: "usd",
@@ -159,7 +156,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // ── 7. Update booking with payment_intent_id ────────────────────
+    // -- 7. Update booking with payment_intent_id --------------------
     const { error: updateError } = await supabase
       .from("bookings")
       .update({
@@ -170,10 +167,10 @@ export async function POST(req: NextRequest) {
 
     if (updateError) {
       console.error("Failed to update booking with payment_intent_id:", updateError);
-      // Non-fatal — the PI exists in Stripe
+      // Non-fatal - the PI exists in Stripe
     }
 
-    // ── 8. Return client_secret ─────────────────────────────────────
+    // -- 8. Return client_secret -------------------------------------
     return NextResponse.json({
       client_secret: paymentIntent.client_secret,
       total: totalAmountCents / 100,

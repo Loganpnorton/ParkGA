@@ -1,18 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import Stripe from "stripe";
+import type Stripe from "stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { notifyBookingConfirmed } from "@/lib/notifications/booking-confirmed";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "", {
-  apiVersion: "2026-06-24.dahlia",
-});
+import { getStripeClient } from "@/lib/stripe/client";
 
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET ?? "";
 
 /**
  * POST /api/stripe/webhook
  *
- * Handles Stripe webhook events — specifically payment_intent.succeeded.
+ * Handles Stripe webhook events - specifically payment_intent.succeeded.
  *
  * Security:
  * - Verifies the Stripe-Signature header using the webhook secret
@@ -23,7 +20,8 @@ const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET ?? "";
  */
 export async function POST(req: NextRequest) {
   try {
-    // ── 1. Read raw body ────────────────────────────────────────────
+    const stripe = getStripeClient();
+    // -- 1. Read raw body --------------------------------------------
     const rawBody = await req.text();
     const signature = req.headers.get("stripe-signature") ?? "";
 
@@ -35,7 +33,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ── 2. Verify signature ─────────────────────────────────────────
+    // -- 2. Verify signature -----------------------------------------
     let event: Stripe.Event;
     try {
       event = stripe.webhooks.constructEvent(rawBody, signature, WEBHOOK_SECRET);
@@ -47,7 +45,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ── 3. Handle only payment_intent.succeeded ─────────────────────
+    // -- 3. Handle only payment_intent.succeeded ---------------------
     if (event.type !== "payment_intent.succeeded") {
       return NextResponse.json({ received: true });
     }
@@ -66,10 +64,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ── 4. Use admin client (bypasses RLS) ──────────────────────────
+    // -- 4. Use admin client (bypasses RLS) --------------------------
     const supabase = createAdminClient();
 
-    // ── 5. Idempotency check ────────────────────────────────────────
+    // -- 5. Idempotency check ----------------------------------------
     const { data: existing } = await supabase
       .from("bookings")
       .select("id, status")
@@ -84,7 +82,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // ── 6. Update booking: set status to confirmed ──────────────────
+    // -- 6. Update booking: set status to confirmed ------------------
     const totalPriceCents = paymentIntent.amount ?? 0;
     const totalPriceDollars = totalPriceCents / 100;
 
@@ -112,7 +110,7 @@ export async function POST(req: NextRequest) {
       `✅ Booking confirmed: booking=${booking?.id}, payment_intent=${paymentIntentId}`,
     );
 
-    // ── 7. Fire notifications ────────────────────────────────────────
+    // -- 7. Fire notifications ----------------------------------------
     if (booking) {
       await fireNotifications(supabase, {
         booking_id: booking.id,
@@ -138,7 +136,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// ── Fire notifications (non-blocking, best-effort) ─────────────────────
+// -- Fire notifications (non-blocking, best-effort) ---------------------
 
 interface NotifInput {
   booking_id: string;
@@ -179,7 +177,7 @@ async function fireNotifications(
       .eq("id", hostId)
       .single();
 
-    // Get emails from auth.users (admin API — always available)
+    // Get emails from auth.users (admin API - always available)
     const [guestUser, hostUser] = await Promise.all([
       supabase.auth.admin.getUserById(guest_id).catch(() => ({ data: { user: null } })),
       supabase.auth.admin.getUserById(hostId).catch(() => ({ data: { user: null } })),

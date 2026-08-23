@@ -2,7 +2,7 @@
  * Sends notifications when a booking is confirmed.
  *
  * Channels:
- * 1. SMS to the Host (via Twilio) — existing behaviour
+ * 1. SMS to the Host (via Twilio) - existing behaviour
  * 2. Email to the Guest  (via Resend)
  * 3. Email to the Host   (via Resend)
  */
@@ -10,7 +10,7 @@
 import { sendSms, buildGoogleMapsUrl } from "@/lib/twilio/client";
 import { sendEmail, BOOKINGS_FROM } from "@/lib/resend/client";
 
-// ── Shared helpers ─────────────────────────────────────────────────────
+// -- Shared helpers -----------------------------------------------------
 
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("en-US", {
@@ -139,7 +139,7 @@ function buildEmailHtml({
         </div>
         ` : ""}
         <p style="margin-top:16px;font-size:13px;color:#9ca3af;">
-          — ParkGA Team
+          - ParkGA Team
         </p>
       </div>
     </div>
@@ -151,7 +151,7 @@ function buildEmailHtml({
 </html>`.trim();
 }
 
-// ── Input ──────────────────────────────────────────────────────────────
+// -- Input --------------------------------------------------------------
 
 export interface BookingConfirmedInput {
   /** Host phone (SMS) */
@@ -181,7 +181,7 @@ export interface BookingConfirmedInput {
   idempotencyKey: string;
 }
 
-// ── Main ───────────────────────────────────────────────────────────────
+// -- Main ---------------------------------------------------------------
 
 export async function notifyBookingConfirmed(
   input: BookingConfirmedInput,
@@ -206,7 +206,7 @@ export async function notifyBookingConfirmed(
   const mapsUrl   = buildGoogleMapsUrl(spotAddress);
   const dashUrl   = `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/dashboard`;
 
-  // ── 1. SMS to Host (existing) ────────────────────────────────────
+  // -- 1. SMS to Host (existing) ------------------------------------
   const smsBody = [
     `🎉 New Booking Confirmed!`,
     ``,
@@ -214,7 +214,7 @@ export async function notifyBookingConfirmed(
     `${guestName} has booked "${spotTitle}".`,
     ``,
     `📅 ${dateStr}`,
-    `⏰ ${startStr} – ${endStr}`,
+    `⏰ ${startStr} - ${endStr}`,
     `💰 $${totalPrice.toFixed(2)} total`,
     ``,
     `📍 ${spotAddress}`,
@@ -225,7 +225,7 @@ export async function notifyBookingConfirmed(
 
   await sendSms(hostPhone, smsBody);
 
-  // ── 2. Email to Guest ────────────────────────────────────────────
+  // -- 2. Email to Guest --------------------------------------------
   await sendEmail({
     from: BOOKINGS_FROM,
     to: guestEmail,
@@ -243,7 +243,7 @@ export async function notifyBookingConfirmed(
     idempotencyKey: `booking-confirmed-guest-${idempotencyKey}`,
   });
 
-  // ── 3. Email to Host ─────────────────────────────────────────────
+  // -- 3. Email to Host ---------------------------------------------
   await sendEmail({
     from: BOOKINGS_FROM,
     to: hostEmail,
@@ -254,7 +254,7 @@ export async function notifyBookingConfirmed(
       bodyLines: [
         `<strong>${guestName}</strong> has booked <strong>${spotTitle}</strong>.`,
         `<div class="detail-row"><span class="detail-label">Date</span><span class="detail-value">${dateStr}</span></div>`,
-        `<div class="detail-row"><span class="detail-label">Time</span><span class="detail-value">${startStr} – ${endStr}</span></div>`,
+        `<div class="detail-row"><span class="detail-label">Time</span><span class="detail-value">${startStr} - ${endStr}</span></div>`,
         `<div class="detail-row"><span class="detail-label">Total</span><span class="detail-value">$${totalPrice.toFixed(2)}</span></div>`,
         `<div class="detail-row"><span class="detail-label">Location</span><span class="detail-value">${spotAddress}</span></div>`,
       ],

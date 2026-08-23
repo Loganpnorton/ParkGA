@@ -2,12 +2,11 @@
 
 import { useState, FormEvent } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Eye, EyeOff, Loader2, CheckCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 export default function SignUpPage() {
-  const router = useRouter();
   const supabase = createClient();
 
   const [name, setName] = useState("");
@@ -64,7 +63,7 @@ export default function SignUpPage() {
             Check your email
           </h1>
           <p className="mt-3 text-sm text-gray-600">
-            We've sent a confirmation link to{" "}
+            We&apos;ve sent a confirmation link to{" "}
             <span className="font-semibold text-gray-900">{email}</span>.
             Click the link to activate your account, and your profile will be
             created automatically.
@@ -89,9 +88,11 @@ export default function SignUpPage() {
         {/* Header */}
         <div className="mb-8 text-center">
           <Link href="/" className="inline-block">
-            <img
+            <Image
               src="/logo-full.png"
               alt="ParkGA Logo"
+              width={200}
+              height={48}
               className="mx-auto h-8 md:h-10 w-auto object-contain drop-shadow-sm hover:scale-105 transition-transform duration-200"
             />
           </Link>

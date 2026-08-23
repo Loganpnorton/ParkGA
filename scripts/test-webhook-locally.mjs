@@ -44,7 +44,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 console.log("\n🧪 Testing Stripe Webhook Flow (checkout.session.completed)\n");
 
 async function run() {
-  // ── 1. Create a test Express connected account ────────────────────
+  // -- 1. Create a test Express connected account --------------------
   let connectedAccountId;
   try {
     console.log("📦 Creating test Express account...");
@@ -67,7 +67,7 @@ async function run() {
     throw err;
   }
 
-  // ── 2. Get a test spot from Supabase ──────────────────────────────
+  // -- 2. Get a test spot from Supabase ------------------------------
   console.log("🔍 Fetching test spot from Supabase...");
   const { data: spot, error: spotError } = await supabase
     .from("spots")
@@ -96,7 +96,7 @@ async function run() {
   console.log(`   ✅ Spot: "${spot.title}" (${spot.id})`);
   console.log(`   ✅ Host Stripe account: ${hostStripeAccount}\n`);
 
-  // ── 3. Create a Checkout Session ─────────────────────────────────
+  // -- 3. Create a Checkout Session ---------------------------------
   console.log("🔗 Creating Checkout Session...");
   const totalAmountCents = spot.price_per_hour
     ? Math.round(4 * spot.price_per_hour * 100) // 4 hours at hourly rate
@@ -149,7 +149,7 @@ async function run() {
   console.log(`   ✅ Platform fee: $${(feeCents / 100).toFixed(2)}`);
   console.log();
 
-  // ── 4. Insert a pending booking to simulate the checkout route ───
+  // -- 4. Insert a pending booking to simulate the checkout route ---
   console.log("📝 Inserting pending booking (simulating checkout route)...");
   const { error: insertErr } = await supabase.from("bookings").upsert(
     {
@@ -170,11 +170,11 @@ async function run() {
     console.log("   ✅ Pending booking created\n");
   }
 
-  // ── 5. Simulate the webhook ──────────────────────────────────────
+  // -- 5. Simulate the webhook --------------------------------------
   // Walk through the webhook logic manually to verify it works:
   console.log("🔍 Simulating webhook processing...");
 
-  // Step 5a: Idempotency check — find booking by checkout_session_id
+  // Step 5a: Idempotency check - find booking by checkout_session_id
   const { data: existing } = await supabase
     .from("bookings")
     .select("id, status")
@@ -224,7 +224,7 @@ async function run() {
     console.log(`   ✅ PaymentIntent: ${updated.payment_intent_id}\n`);
   }
 
-  // ── 6. Verify the final state in Supabase ─────────────────────────
+  // -- 6. Verify the final state in Supabase -------------------------
   console.log("📊 Verifying final booking state...");
   const { data: final } = await supabase
     .from("bookings")
@@ -235,7 +235,7 @@ async function run() {
   if (final) {
     console.log(`   Booking ID:    ${final.id}`);
     console.log(`   Status:        ${final.status}`);
-    console.log(`   PaymentIntent: ${final.payment_intent_id ?? "—"}`);
+    console.log(`   PaymentIntent: ${final.payment_intent_id ?? "-"}`);
     console.log(`   Session ID:    ${final.checkout_session_id}`);
     console.log(`   Total:         $${final.total_price.toFixed(2)}`);
 
@@ -243,11 +243,11 @@ async function run() {
       console.log(`\n🎉 Webhook simulation PASSED!`);
       console.log(`   The booking was successfully confirmed in Supabase.\n`);
     } else {
-      console.log(`\n❌ Webhook simulation FAILED — status is "${final.status}"\n`);
+      console.log(`\n❌ Webhook simulation FAILED - status is "${final.status}"\n`);
     }
   }
 
-  // ── 7. Cleanup ───────────────────────────────────────────────────
+  // -- 7. Cleanup ---------------------------------------------------
   await cleanup();
   console.log("🧹 Test account deleted.\n");
 

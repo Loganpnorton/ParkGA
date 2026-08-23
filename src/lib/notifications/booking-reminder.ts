@@ -62,7 +62,7 @@ export async function notifyGuestBookingReminder(
     `Your booking at "${spotTitle}" starts soon.`,
     ``,
     `📅 ${dateStr}`,
-    `⏰ ${startStr} – ${endStr}`,
+    `⏰ ${startStr} - ${endStr}`,
     ``,
     `📍 ${spotAddress}`,
     `🗺️ Open in Maps: ${mapsUrl}`,

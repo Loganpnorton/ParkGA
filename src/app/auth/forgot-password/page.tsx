@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Loader2, CheckCircle, ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -47,7 +48,7 @@ export default function ForgotPasswordPage() {
             Check your email
           </h1>
           <p className="mt-3 text-sm text-gray-600">
-            We've sent a password reset link to{" "}
+            We&apos;ve sent a password reset link to{" "}
             <span className="font-semibold text-gray-900">{email}</span>.
           </p>
           <p className="mt-2 text-sm text-gray-500">
@@ -72,9 +73,11 @@ export default function ForgotPasswordPage() {
         {/* Header */}
         <div className="mb-8 text-center">
           <Link href="/" className="inline-block">
-            <img
+            <Image
               src="/logo-full.png"
               alt="ParkGA Logo"
+              width={200}
+              height={48}
               className="mx-auto h-8 md:h-10 w-auto object-contain drop-shadow-sm hover:scale-105 transition-transform duration-200"
             />
           </Link>
@@ -82,7 +85,7 @@ export default function ForgotPasswordPage() {
             Forgot password
           </h1>
           <p className="mt-2 text-sm text-slate-600">
-            Enter your email and we'll send you a reset link
+            Enter your email and we&apos;ll send you a reset link
           </p>
         </div>
 

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Star, ChevronLeft, ChevronRight } from "lucide-react";
 
-/* ── Types ────────────────────────────────────────────────────────────── */
+/* -- Types -------------------------------------------------------------- */
 export interface TrendingSpot {
   id: string;
   title: string;
@@ -17,14 +17,14 @@ export interface TrendingSpot {
   review_count: number;
 }
 
-/* ── Fallback Images ──────────────────────────────────────────────────── */
+/* -- Fallback Images ---------------------------------------------------- */
 const FALLBACK_IMAGES = [
   "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&q=80",
   "https://images.unsplash.com/photo-1506521781263-d8422e82f27a?w=800&q=80",
   "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
 ];
 
-/** Force every spot to have an image — DB empty arrays get fallbacks.     */
+/** Force every spot to have an image - DB empty arrays get fallbacks.     */
 export function enforceSpotImages(spots: TrendingSpot[]): TrendingSpot[] {
   return spots.map((spot, i) => ({
     ...spot,
@@ -35,7 +35,7 @@ export function enforceSpotImages(spots: TrendingSpot[]): TrendingSpot[] {
   }));
 }
 
-/* ── Spot Card ────────────────────────────────────────────────────────── */
+/* -- Spot Card ---------------------------------------------------------- */
 function SpotCard({
   spot,
   index,
@@ -70,19 +70,19 @@ function SpotCard({
   let opacity = 1;
 
   if (normalized === 0) {
-    // Active — center
+    // Active - center
     x = 0;
     scale = 1;
     zIndex = 10;
     opacity = 1;
   } else if (normalized === 1 || normalized === -(spotsLength - 1)) {
-    // Next — right
+    // Next - right
     x = "110%";
     scale = 0.85;
     zIndex = 5;
     opacity = 0.6;
   } else if (normalized === -1 || normalized === (spotsLength - 1)) {
-    // Prev — left
+    // Prev - left
     x = "-110%";
     scale = 0.85;
     zIndex = 5;
@@ -106,7 +106,7 @@ function SpotCard({
         href={`/listings/${spot.id}`}
         className="group flex flex-col h-full"
       >
-        {/* Image — top half */}
+        {/* Image - top half */}
         <div className="relative h-1/2 overflow-hidden bg-gray-100">
           <img
             src={displayImage}
@@ -116,7 +116,7 @@ function SpotCard({
           />
         </div>
 
-        {/* Details — bottom half */}
+        {/* Details - bottom half */}
         <div className="flex flex-col justify-between flex-1 p-5">
           <div>
             <h3 className="font-semibold text-gray-900 truncate group-hover:text-parkga-600 transition-colors">
@@ -151,7 +151,7 @@ function SpotCard({
   );
 }
 
-/* ── Skeleton ─────────────────────────────────────────────────────────── */
+/* -- Skeleton ----------------------------------------------------------- */
 function SkeletonCard() {
   return (
     <div className="absolute w-[85vw] sm:w-[350px] h-[400px] bg-white rounded-xl shadow-lg border border-gray-100 flex flex-col overflow-hidden animate-pulse">
@@ -168,7 +168,7 @@ function SkeletonCard() {
   );
 }
 
-/* ── Trending Carousel ───────────────────────────────────────────────── */
+/* -- Trending Carousel ------------------------------------------------- */
 export default function TrendingCarousel({
   spots,
   loading,

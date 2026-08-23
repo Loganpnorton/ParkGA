@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { motion, useScroll, useMotionValueEvent, useInView } from "framer-motion";
 
-/* ── Step Data ──────────────────────────────────────────────────────────── */
+/* -- Step Data ------------------------------------------------------------ */
 const STEPS = [
   {
     title: "Find a Spot",
@@ -25,10 +25,10 @@ const STEPS = [
   },
 ] as const;
 
-/* ── Wide Sweeping S-Curve (viewBox 0 0 100 200) ─────────────────────── */
+/* -- Wide Sweeping S-Curve (viewBox 0 0 100 200) ----------------------- */
 const SVG_PATH = "M 15 5 C 15 60, 85 40, 85 100 C 85 160, 15 140, 15 195";
 
-/* ── Spring Image Variants ──────────────────────────────────────────────── */
+/* -- Spring Image Variants ------------------------------------------------ */
 const IMAGE_VARIANTS = {
   active: {
     x: 0,
@@ -46,14 +46,14 @@ const IMAGE_VARIANTS = {
   },
 };
 
-/* ── Horizontal align classes: Card 1 & 3 right, Card 2 left ──────────── */
+/* -- Horizontal align classes: Card 1 & 3 right, Card 2 left ------------ */
 const ALIGN_CLASSES = [
   "self-end justify-self-end mr-0 lg:mr-[40%]",
   "self-start justify-self-start ml-0 lg:ml-[35%]",
   "self-end justify-self-end mr-0 lg:mr-[40%]",
 ];
 
-/* ── Step Card ──────────────────────────────────────────────────────────── */
+/* -- Step Card ------------------------------------------------------------ */
 function StepCard({
   step,
   index,
@@ -94,7 +94,7 @@ function StepCard({
   );
 }
 
-/* ── Mobile Step Card (simpler, with spring-in animation) ─────────────── */
+/* -- Mobile Step Card (simpler, with spring-in animation) --------------- */
 function MobileStepCard({
   step,
   index,
@@ -136,7 +136,7 @@ function MobileStepCard({
   );
 }
 
-/* ── Desktop How It Works Section (scroll-driven SVG S-curve) ─────────── */
+/* -- Desktop How It Works Section (scroll-driven SVG S-curve) ----------- */
 function DesktopHowItWorks() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -156,7 +156,7 @@ function DesktopHowItWorks() {
 
   return (
     <section ref={containerRef} className="relative h-[300vh]">
-      {/* ── Sticky container ─────────────────────────────────────────────── */}
+      {/* -- Sticky container ----------------------------------------------- */}
       <div className="sticky top-0 relative flex flex-col h-screen w-full bg-white">
         {/* Dot-pattern background */}
         <div
@@ -178,9 +178,9 @@ function DesktopHowItWorks() {
           </p>
         </div>
 
-        {/* ── Canvas: flex-col justify-between distributes cards naturally ── */}
+        {/* -- Canvas: flex-col justify-between distributes cards naturally -- */}
         <div className="relative flex flex-col justify-between flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-0 overflow-hidden pb-4">
-          {/* SVG — absolute behind the cards */}
+          {/* SVG - absolute behind the cards */}
           <svg
             className="absolute inset-x-4 sm:inset-x-6 lg:inset-x-0 inset-y-0 h-full z-0"
             viewBox="0 0 100 200"
@@ -207,7 +207,7 @@ function DesktopHowItWorks() {
             />
           </svg>
 
-          {/* Step Cards — flex children distributed via justify-between */}
+          {/* Step Cards - flex children distributed via justify-between */}
           {STEPS.map((step, i) => (
             <StepCard
               key={step.title}
@@ -222,7 +222,7 @@ function DesktopHowItWorks() {
   );
 }
 
-/* ── Mobile How It Works Section (no S-curve, stacked cards, green line) ─ */
+/* -- Mobile How It Works Section (no S-curve, stacked cards, green line) - */
 function MobileHowItWorks() {
   return (
     <section className="bg-white py-16 px-4">
@@ -261,7 +261,7 @@ function MobileHowItWorks() {
   );
 }
 
-/* ── How It Works Section ───────────────────────────────────────────────── */
+/* -- How It Works Section ------------------------------------------------- */
 export default function HowItWorks() {
   return (
     <>

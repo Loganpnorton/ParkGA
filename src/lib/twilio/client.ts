@@ -25,31 +25,24 @@ export async function sendSms(
   try {
     const twilio = getTwilioClient();
 
-    const params: Record<string, string> = {
-      to,
-      body,
-    };
+    const params = messagingServiceSid
+      ? { to, body, messagingServiceSid }
+      : (() => {
+          const fromNumber = process.env.TWILIO_PHONE_NUMBER;
+          if (!fromNumber) {
+            throw new Error(
+              "TWILIO_PHONE_NUMBER or TWILIO_MESSAGING_SERVICE_SID must be set.",
+            );
+          }
+          return { to, body, from: fromNumber };
+        })();
 
-    if (messagingServiceSid) {
-      params.messagingServiceSid = messagingServiceSid;
-    } else {
-      const fromNumber = process.env.TWILIO_PHONE_NUMBER;
-      if (!fromNumber) {
-        throw new Error(
-          "TWILIO_PHONE_NUMBER or TWILIO_MESSAGING_SERVICE_SID must be set.",
-        );
-      }
-      params.from = fromNumber;
-    }
-
-    const message = await twilio.messages.create(
-      params as any,
-    );
-    console.log(`📱 SMS sent to ${to}: SID ${message.sid}`);
+    const message = await twilio.messages.create(params);
+    console.info("SMS sent", { sid: message.sid });
     return message.sid;
   } catch (err) {
     console.error(
-      "❌ Failed to send SMS:",
+      "Failed to send SMS:",
       err instanceof Error ? err.message : err,
     );
     return null;

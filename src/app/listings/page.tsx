@@ -5,8 +5,6 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import {
   MapPin,
-  Clock,
-  DollarSign,
   Car,
   Star,
   Navigation,
@@ -41,7 +39,7 @@ const Popup = dynamic(
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
 
-// ─── Types ─────────────────────────────────────────────────────────────
+// --- Types -------------------------------------------------------------
 interface Spot {
   id: string;
   host_id: string;
@@ -57,15 +55,10 @@ interface Spot {
   created_at: string;
 }
 
-interface Profile {
-  name: string | null;
-  avatar_url: string | null;
-}
-
 // Truist Park center coordinates
 const TRUIST_CENTER = { latitude: 33.8905, longitude: -84.468, zoom: 14 };
 
-// ─── SpotHero-style Popup Card ─────────────────────────────────────────
+// --- SpotHero-style Popup Card -----------------------------------------
 function SpotHeroPopupCard({
   spot,
   onClose,
@@ -87,7 +80,7 @@ function SpotHeroPopupCard({
 
   return (
     <div className="w-72 overflow-hidden rounded-xl border border-gray-200 bg-white text-gray-900">
-      {/* ── Image section ───────────────────────────────────────────── */}
+      {/* -- Image section --------------------------------------------- */}
       <div className="relative h-40 w-full">
         {images.length > 0 ? (
           <img
@@ -101,7 +94,7 @@ function SpotHeroPopupCard({
           </div>
         )}
 
-        {/* Close button — top-right */}
+        {/* Close button - top-right */}
         <button
           type="button"
           onClick={onClose}
@@ -111,7 +104,7 @@ function SpotHeroPopupCard({
           <X className="h-4 w-4" />
         </button>
 
-        {/* Image carousel arrows — middle-left / middle-right */}
+        {/* Image carousel arrows - middle-left / middle-right */}
         {hasMultiple && (
           <>
             <button
@@ -133,7 +126,7 @@ function SpotHeroPopupCard({
           </>
         )}
 
-        {/* Image count pill — bottom-center */}
+        {/* Image count pill - bottom-center */}
         {images.length > 0 && (
           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-2.5 py-0.5 text-[11px] font-medium text-white/90">
             {imageIndex + 1}/{images.length}
@@ -141,9 +134,9 @@ function SpotHeroPopupCard({
         )}
       </div>
 
-      {/* ── Details section ─────────────────────────────────────────── */}
+      {/* -- Details section ------------------------------------------- */}
       <div className="flex flex-col gap-2 p-4">
-        {/* Row 1 — Title + Price */}
+        {/* Row 1 - Title + Price */}
         <div className="flex items-start justify-between gap-2">
           <h3 className="truncate text-lg font-bold leading-tight text-gray-900">
             {spot.title}
@@ -153,7 +146,7 @@ function SpotHeroPopupCard({
           </span>
         </div>
 
-        {/* Row 2 — Walking distance + Subtotal /hr */}
+        {/* Row 2 - Walking distance + Subtotal /hr */}
         <div className="flex items-center justify-between text-sm">
           <div className="flex items-center gap-1.5 text-gray-500">
             <PersonStanding className="h-4 w-4" />
@@ -162,7 +155,7 @@ function SpotHeroPopupCard({
           <span className="text-gray-400">{priceLabel}</span>
         </div>
 
-        {/* Row 3 — Rating + Book Now */}
+        {/* Row 3 - Rating + Book Now */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1 text-sm text-gray-500">
             <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
@@ -180,7 +173,7 @@ function SpotHeroPopupCard({
   );
 }
 
-// ─── Spot Card ─────────────────────────────────────────────────────────
+// --- Spot Card ---------------------------------------------------------
 function SpotCard({
   spot,
   hostName,
@@ -316,7 +309,7 @@ function SpotCard({
   );
 }
 
-// ─── Search Page ───────────────────────────────────────────────────────
+// --- Search Page -------------------------------------------------------
 export default function ListingsPage() {
   const supabase = createClient();
 
@@ -327,7 +320,7 @@ export default function ListingsPage() {
   const [mapLoaded, setMapLoaded] = useState(false);
   const [showMobileMap, setShowMobileMap] = useState(false);
 
-  // Map viewport bounds — updated on every pan/zoom
+  // Map viewport bounds - updated on every pan/zoom
   const [mapBounds, setMapBounds] = useState<{
     north: number;
     south: number;
@@ -345,7 +338,7 @@ export default function ListingsPage() {
   const [checkingAvail, setCheckingAvail] = useState(false);
   const [availError, setAvailError] = useState<string | null>(null);
 
-  // ── Read bounds from a Mapbox GL map instance ────────────────────
+  // -- Read bounds from a Mapbox GL map instance --------------------
   const setBoundsFromMap = useCallback((map: mapboxgl.Map) => {
     const bounds = map.getBounds();
     if (!bounds) return;
@@ -357,7 +350,7 @@ export default function ListingsPage() {
     });
   }, []);
 
-  // ── Track map viewport bounds on pan/zoom ────────────────────────
+  // -- Track map viewport bounds on pan/zoom ------------------------
   const handleMapMove = useCallback(
     (e: { target: mapboxgl.Map }) => {
       setBoundsFromMap(e.target);
@@ -365,7 +358,7 @@ export default function ListingsPage() {
     [setBoundsFromMap],
   );
 
-  // ── Fetch spots on mount ─────────────────────────────────────────
+  // -- Fetch spots on mount -----------------------------------------
   useEffect(() => {
     async function fetchSpots() {
       const { data, error } = await supabase
@@ -403,7 +396,7 @@ export default function ListingsPage() {
     fetchSpots();
   }, [supabase]);
 
-  // ── Check availability via RPC ──────────────────────────────────
+  // -- Check availability via RPC ----------------------------------
   async function checkAvailability() {
     setAvailError(null);
 
@@ -457,7 +450,7 @@ export default function ListingsPage() {
       });
   }
 
-  // ── Filter / search ───────────────────────────────────────────────
+  // -- Filter / search -----------------------------------------------
   const filteredSpots = useMemo(() => {
     if (!searchQuery.trim()) return spots;
     const q = searchQuery.toLowerCase();
@@ -469,7 +462,7 @@ export default function ListingsPage() {
     );
   }, [spots, searchQuery]);
 
-  // ── Filter by visible map bounds ─────────────────────────────────
+  // -- Filter by visible map bounds ---------------------------------
   const visibleSpots = useMemo(() => {
     if (!mapBounds) return filteredSpots;
     const { north, south, east, west } = mapBounds;
@@ -482,22 +475,7 @@ export default function ListingsPage() {
     );
   }, [filteredSpots, mapBounds]);
 
-  // ── Selected spot for map popup ──────────────────────────────────
-  const selectedSpot = spots.find((s) => s.id === selectedSpotId);
-
-  // ── Feature helper ────────────────────────────────────────────────
-  const featureLabels: Record<string, string> = {
-    covered: "Covered",
-    secure: "Security",
-    ev_charger: "EV Charger",
-    "247_access": "24/7 Access",
-    handicap: "Accessible",
-    oversize: "Oversize",
-    lighting: "Well Lit",
-    gate: "Gated",
-  };
-
-  // ── Loading ───────────────────────────────────────────────────────
+  // -- Loading -------------------------------------------------------
   if (loading) {
     return (
       <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
@@ -508,7 +486,7 @@ export default function ListingsPage() {
 
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col lg:flex-row">
-      {/* ── Left Panel: Search + List ──────────────────────────────── */}
+      {/* -- Left Panel: Search + List -------------------------------- */}
       <div className={`flex w-full flex-col border-b border-gray-200 lg:w-[420px] lg:shrink-0 lg:border-b-0 lg:border-r ${showMobileMap ? "hidden lg:flex" : "flex"} flex-1 lg:flex-none`}>
         {/* Search header */}
         <div className="border-b border-gray-200 px-4 py-3">
@@ -665,7 +643,7 @@ export default function ListingsPage() {
         </div>
       </div>
 
-      {/* ── Right Panel: Map ───────────────────────────────────────── */}
+      {/* -- Right Panel: Map ----------------------------------------- */}
       <div className={`relative ${!showMobileMap ? "hidden md:block flex-1" : "block h-[calc(100vh-4rem)] lg:flex-1 lg:h-auto"}`}>
         {MAPBOX_TOKEN && MAPBOX_TOKEN !== "your_mapbox_token_here" ? (
           <Map
@@ -687,7 +665,7 @@ export default function ListingsPage() {
                   ? `$${spot.price_per_hour}`
                   : `$${spot.price_per_event}`;
 
-                // ── Selected spot → render Popup (no Marker) ──
+                // -- Selected spot → render Popup (no Marker) --
                 if (isSelected) {
                   return (
                     <Popup
@@ -707,7 +685,7 @@ export default function ListingsPage() {
                   );
                 }
 
-                // ── Non-selected spot → small pill Marker ──
+                // -- Non-selected spot → small pill Marker --
                 return (
                   <Marker
                     key={spot.id}
@@ -742,7 +720,7 @@ export default function ListingsPage() {
         )}
       </div>
 
-      {/* ── Mobile Map/List Toggle FAB ──────────────────────────────── */}
+      {/* -- Mobile Map/List Toggle FAB -------------------------------- */}
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 md:hidden">
         <button
           type="button"

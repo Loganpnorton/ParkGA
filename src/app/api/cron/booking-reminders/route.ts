@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { notifyGuestBookingReminder } from "@/lib/notifications/booking-reminder";
 
@@ -14,8 +14,23 @@ import { notifyGuestBookingReminder } from "@/lib/notifications/booking-reminder
  * crontab example (every 15 minutes):
  *   every 15 min: curl https://parkga.com/api/cron/booking-reminders
  */
-export async function GET() {
+interface ReminderSpot {
+  title: string | null;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
+}
+
+export async function GET(req: NextRequest) {
   try {
+    const cronSecret = process.env.CRON_SECRET;
+    if (
+      !cronSecret ||
+      req.headers.get("authorization") !== `Bearer ${cronSecret}`
+    ) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const supabase = createAdminClient();
 
     // Find bookings starting in 45-75 minutes from now
@@ -41,7 +56,7 @@ export async function GET() {
     let sentCount = 0;
 
     for (const booking of bookings) {
-      const spot = booking.spot as any;
+      const spot = booking.spot as unknown as ReminderSpot;
       if (!spot) continue;
 
       // Fetch guest profile

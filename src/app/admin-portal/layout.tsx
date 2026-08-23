@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Loader2, ShieldAlert } from "lucide-react";
 import Link from "next/link";
@@ -20,7 +19,6 @@ export default function AdminPortalLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const router = useRouter();
   const supabase = createClient();
   const [status, setStatus] = useState<"loading" | "authorized" | "denied">(
     "loading",

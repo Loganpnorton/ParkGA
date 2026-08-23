@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Menu, X, ChevronDown, LayoutDashboard, User, LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -70,9 +71,11 @@ export default function Navbar() {
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link href="/">
-          <img
+          <Image
             src="/logo-full.png"
             alt="ParkGA Logo"
+            width={200}
+            height={48}
             className="h-8 md:h-10 w-auto object-contain drop-shadow-sm hover:scale-105 transition-transform duration-200"
           />
         </Link>

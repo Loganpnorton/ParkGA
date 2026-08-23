@@ -17,7 +17,6 @@ export default function CheckoutSuccessPage() {
   const redirectStatus = searchParams.get("redirect_status");
 
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
-  const [message, setMessage] = useState("");
 
   useEffect(() => {
     async function verify() {
@@ -38,7 +37,7 @@ export default function CheckoutSuccessPage() {
           return;
         }
 
-        // Webhook may not have fired yet — poll for a few seconds
+        // Webhook may not have fired yet - poll for a few seconds
         for (let i = 0; i < 10; i++) {
           await new Promise((r) => setTimeout(r, 1000));
           const { data: poll } = await supabase
@@ -58,7 +57,7 @@ export default function CheckoutSuccessPage() {
         return;
       }
 
-      // No params — check booking status directly
+      // No params - check booking status directly
       const { data: booking } = await supabase
         .from("bookings")
         .select("status")
@@ -68,7 +67,7 @@ export default function CheckoutSuccessPage() {
       if (booking?.status === "confirmed") {
         setStatus("success");
       } else {
-        setStatus("success"); // Optimistic — webhook will confirm
+        setStatus("success"); // Optimistic - webhook will confirm
       }
     }
 
@@ -90,7 +89,9 @@ export default function CheckoutSuccessPage() {
         <h1 className="mt-4 text-xl font-bold text-gray-900">
           Payment verification failed
         </h1>
-        <p className="mt-2 text-sm text-gray-500">{message}</p>
+        <p className="mt-2 text-sm text-gray-500">
+          Payment confirmation could not be verified.
+        </p>
         <Link
           href={`/checkout/${bookingId}`}
           className="mt-6 rounded-lg bg-parkga-600 px-6 py-2.5 text-sm font-semibold text-white"

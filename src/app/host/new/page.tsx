@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, FormEvent, useCallback, useEffect } from "react";
+import { useState, useRef, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import dynamic from "next/dynamic";
@@ -36,7 +36,7 @@ const Marker = dynamic(
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? "";
 
-// ─── Step configuration ────────────────────────────────────────────────
+// --- Step configuration ------------------------------------------------
 const STEPS = [
   { id: "basic", label: "Basic Details", icon: Home, description: "Title & description" },
   { id: "address", label: "Address", icon: MapPin, description: "Location & coordinates" },
@@ -47,7 +47,7 @@ const STEPS = [
 
 type StepId = (typeof STEPS)[number]["id"];
 
-// ─── Available features (stored as JSONB) ──────────────────────────────
+// --- Available features (stored as JSONB) ------------------------------
 const AVAILABLE_FEATURES = [
   { key: "covered", label: "Covered Parking" },
   { key: "secure", label: "Security Camera" },
@@ -59,7 +59,7 @@ const AVAILABLE_FEATURES = [
   { key: "gate", label: "Gated Entry" },
 ] as const;
 
-// ─── Form data shape (maps 1:1 to spots table) ─────────────────────────
+// --- Form data shape (maps 1:1 to spots table) -------------------------
 interface FormData {
   title: string;
   description: string;
@@ -84,7 +84,7 @@ const INITIAL_FORM: FormData = {
   files: [],
 };
 
-// ─── Validation per step ───────────────────────────────────────────────
+// --- Validation per step -----------------------------------------------
 function validateStep(step: StepId, data: FormData): string | null {
   switch (step) {
     case "basic":
@@ -117,7 +117,7 @@ function validateStep(step: StepId, data: FormData): string | null {
   }
 }
 
-// ─── Page Component ────────────────────────────────────────────────────
+// --- Page Component ----------------------------------------------------
 export default function NewListingPage() {
   const router = useRouter();
   const supabase = createClient();
@@ -141,7 +141,7 @@ export default function NewListingPage() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [mapLoaded, setMapLoaded] = useState(false);
 
-  // ── Helpers ──────────────────────────────────────────────────────
+  // -- Helpers ------------------------------------------------------
   function updateField<K extends keyof FormData>(key: K, value: FormData[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
     setError(null);
@@ -179,7 +179,7 @@ export default function NewListingPage() {
     }
   }
 
-  // ── Geocoding ─────────────────────────────────────────────────────
+  // -- Geocoding -----------------------------------------------------
   async function handleGeocode(query: string) {
     if (!query.trim() || !MAPBOX_TOKEN) return;
 
@@ -230,7 +230,7 @@ export default function NewListingPage() {
     setForm((prev) => ({ ...prev, lat: "", lng: "" }));
   }
 
-  // ── File handling ─────────────────────────────────────────────────
+  // -- File handling -------------------------------------------------
   function handleFiles(newFiles: FileList | null) {
     if (!newFiles) return;
     const allowed = ["image/jpeg", "image/png", "image/webp"];
@@ -260,7 +260,7 @@ export default function NewListingPage() {
     setPreviews((prev) => prev.filter((_, i) => i !== index));
   }
 
-  // ── Submit ────────────────────────────────────────────────────────
+  // -- Submit --------------------------------------------------------
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
 
@@ -330,7 +330,7 @@ export default function NewListingPage() {
         throw insertErr;
       }
 
-      // Listing saved successfully — now check if Stripe onboarding is needed
+      // Listing saved successfully - now check if Stripe onboarding is needed
       const { data: profile } = await supabase
         .from("profiles")
         .select("stripe_account_id")
@@ -338,7 +338,7 @@ export default function NewListingPage() {
         .single();
 
       if (profile && !profile.stripe_account_id) {
-        // No Stripe account — redirect to onboarding, then back to dashboard
+        // No Stripe account - redirect to onboarding, then back to dashboard
         const res = await fetch("/api/stripe/onboard", { method: "POST" });
         const data = await res.json();
 
@@ -347,21 +347,21 @@ export default function NewListingPage() {
           return;
         }
 
-        // If onboarding API fails, still show success — they can connect later
+        // If onboarding API fails, still show success - they can connect later
         toast.info(
           "Your listing was saved! You can connect Stripe later from your Dashboard."
         );
       }
 
       setSuccess(true);
-    } catch (err) {
+    } catch {
       toast.error("Something went wrong while saving your listing. Please try again.");
     } finally {
       setSubmitting(false);
     }
   }
 
-  // ── Progress ──────────────────────────────────────────────────────
+  // -- Progress ------------------------------------------------------
   const progressPct = Math.round(((stepIndex + 1) / STEPS.length) * 100);
 
   // Map center for preview
@@ -371,7 +371,7 @@ export default function NewListingPage() {
       : undefined;
   const hasCoordinates = Boolean(form.lat && form.lng);
 
-  // ── Success state ─────────────────────────────────────────────────
+  // -- Success state -------------------------------------------------
   if (success) {
     return (
       <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-12">
@@ -409,7 +409,7 @@ export default function NewListingPage() {
     );
   }
 
-  // ── Render ────────────────────────────────────────────────────────
+  // -- Render --------------------------------------------------------
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
       {/* Header */}
@@ -491,7 +491,7 @@ export default function NewListingPage() {
             </div>
           )}
 
-          {/* ── Step 1: Basic Details ──────────────────────────────── */}
+          {/* -- Step 1: Basic Details -------------------------------- */}
           {currentStep === "basic" && (
             <div className="space-y-5">
               <div>
@@ -522,7 +522,7 @@ export default function NewListingPage() {
                   rows={4}
                   value={form.description}
                   onChange={(e) => updateField("description", e.target.value)}
-                  placeholder="Describe the parking spot — dimensions, accessibility, nearby landmarks, etc."
+                  placeholder="Describe the parking spot - dimensions, accessibility, nearby landmarks, etc."
                   className="mt-1.5 block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 placeholder-gray-400 transition-colors focus:border-parkga-500 focus:outline-none focus:ring-2 focus:ring-parkga-500/20"
                 />
                 <p className="mt-1 text-xs text-gray-400">
@@ -532,7 +532,7 @@ export default function NewListingPage() {
             </div>
           )}
 
-          {/* ── Step 2: Address with Geocoding & Map ───────────────── */}
+          {/* -- Step 2: Address with Geocoding & Map ----------------- */}
           {currentStep === "address" && (
             <div className="space-y-5">
               <div>
@@ -698,7 +698,7 @@ export default function NewListingPage() {
             </div>
           )}
 
-          {/* ── Step 3: Features ───────────────────────────────────── */}
+          {/* -- Step 3: Features ------------------------------------- */}
           {currentStep === "features" && (
             <div className="space-y-5">
               <div>
@@ -736,7 +736,7 @@ export default function NewListingPage() {
             </div>
           )}
 
-          {/* ── Step 4: Pricing ────────────────────────────────────── */}
+          {/* -- Step 4: Pricing -------------------------------------- */}
           {currentStep === "pricing" && (
             <div className="space-y-5">
               <div>
@@ -787,7 +787,7 @@ export default function NewListingPage() {
             </div>
           )}
 
-          {/* ── Step 5: Photos ─────────────────────────────────────── */}
+          {/* -- Step 5: Photos --------------------------------------- */}
           {currentStep === "photos" && (
             <div className="space-y-5">
               <div>
@@ -846,7 +846,7 @@ export default function NewListingPage() {
             </div>
           )}
 
-          {/* ── Navigation buttons ─────────────────────────────────── */}
+          {/* -- Navigation buttons ----------------------------------- */}
           <div className="mt-8 flex items-center justify-between border-t border-gray-100 pt-6">
             <button
               type="button"

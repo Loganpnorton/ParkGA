@@ -37,7 +37,7 @@ const twilio = Twilio(TWILIO_SID, TWILIO_TOKEN);
 console.log("\n🧪 Testing SMS Booking Reminder\n");
 
 async function run() {
-  // ── 1. Find confirmed bookings in the window ──────────────
+  // -- 1. Find confirmed bookings in the window --------------
   const now = new Date();
   const windowStart = new Date(now.getTime() + 45 * 60 * 1000).toISOString();
   const windowEnd = new Date(now.getTime() + 75 * 60 * 1000).toISOString();
@@ -93,7 +93,7 @@ async function run() {
     console.log(`   Guest: ${guest?.name ?? "N/A"} (${guest?.phone ?? "no phone"})`);
 
     if (!guest?.phone) {
-      console.log("   ⏭️  Skipping — no phone number\n");
+      console.log("   ⏭️  Skipping - no phone number\n");
       continue;
     }
 

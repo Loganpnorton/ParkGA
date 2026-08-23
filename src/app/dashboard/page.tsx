@@ -23,7 +23,6 @@ import {
   Plus,
   TrendingUp,
   Star,
-  MessageSquare,
   X,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -494,7 +493,7 @@ function DashboardInner() {
                         <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
                           <span className="flex items-center gap-1">
                             <Clock className="h-3 w-3" />
-                            {formatDate(booking.start_time)} · {formatTime(booking.start_time)} – {formatTime(booking.end_time)}
+                            {formatDate(booking.start_time)} · {formatTime(booking.start_time)} - {formatTime(booking.end_time)}
                           </span>
                           <span className="flex items-center gap-1">
                             <DollarSign className="h-3 w-3" />
@@ -550,7 +549,7 @@ function DashboardInner() {
                   </h3>
                   <p className="mt-1 text-sm text-amber-700">
                     You need to connect a Stripe account before you can publish
-                    listings and receive payouts. Guests won't be able to book
+                    listings and receive payouts. Guests won&apos;t be able to book
                     your spots until this is set up.
                   </p>
                   <button
@@ -673,7 +672,7 @@ function DashboardInner() {
                 <CreditCard className="h-5 w-5 text-purple-600" />
               </div>
               <div className="flex-1">
-                <h3 className="text-sm font-semibold text-gray-900">Stripe Connect — Receive Payouts</h3>
+                <h3 className="text-sm font-semibold text-gray-900">Stripe Connect - Receive Payouts</h3>
                 <p className="mt-0.5 text-xs text-gray-500">
                   {profile?.stripe_account_id
                     ? "Your Stripe account is linked."
