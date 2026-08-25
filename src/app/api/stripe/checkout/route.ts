@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getStripeClient } from "@/lib/stripe/client";
+import { calculateBookingPrice, validateBookingRequest } from "@/lib/booking/domain";
 
 const PLATFORM_FEE_PERCENT = 0.15; // 15% platform fee
 const ORIGIN =
@@ -25,18 +26,20 @@ export async function POST(req: NextRequest) {
 
     // -- 2. Parse request body ---------------------------------------
     const body = await req.json();
-    const { spot_id, start_time, end_time } = body as {
+    let bookingRequest;
+    try {
+      bookingRequest = validateBookingRequest(body as {
       spot_id: string;
       start_time: string;
       end_time: string;
-    };
-
-    if (!spot_id || !start_time || !end_time) {
+      });
+    } catch (error) {
       return NextResponse.json(
-        { error: "Missing required fields: spot_id, start_time, end_time." },
+        { error: error instanceof Error ? error.message : "Invalid booking request." },
         { status: 400 },
       );
     }
+    const { spotId: spot_id, startTime: start_time, endTime: end_time } = bookingRequest;
 
     // -- 3. Fetch spot + host profile --------------------------------
     const { data: spot, error: spotError } = await supabase
@@ -69,34 +72,16 @@ export async function POST(req: NextRequest) {
     }
 
     // -- 4. Calculate price ------------------------------------------
-    const start = new Date(start_time);
-    const end = new Date(end_time);
-    const hours =
-      (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-
-    let totalAmountCents: number;
-
-    // If spot has price_per_event and it's a short window, use event pricing
-    if (spot.price_per_event && hours <= 24) {
-      totalAmountCents = Math.round(spot.price_per_event * 100);
-    } else if (spot.price_per_hour) {
-      totalAmountCents = Math.round(hours * spot.price_per_hour * 100);
-    } else {
+    let price;
+    try {
+      price = calculateBookingPrice(spot, start_time, end_time, PLATFORM_FEE_PERCENT);
+    } catch (error) {
       return NextResponse.json(
-        { error: "This spot has no valid pricing configured." },
+        { error: error instanceof Error ? error.message : "Invalid spot pricing." },
         { status: 400 },
       );
     }
-
-    const feeCents = Math.round(totalAmountCents * PLATFORM_FEE_PERCENT);
-    const hostReceivesCents = totalAmountCents - feeCents;
-
-    if (totalAmountCents < 50) {
-      return NextResponse.json(
-        { error: "Total must be at least $0.50." },
-        { status: 400 },
-      );
-    }
+    const { hours, totalAmountCents, feeCents, hostReceivesCents } = price;
 
     // -- 5. Create Checkout Session (Destination Charge) -------------
     const session = await stripe.checkout.sessions.create({

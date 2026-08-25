@@ -3,6 +3,7 @@ import type Stripe from "stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { notifyBookingConfirmed } from "@/lib/notifications/booking-confirmed";
 import { getStripeClient } from "@/lib/stripe/client";
+import { classifyPaymentTransition } from "@/lib/booking/domain";
 
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET ?? "";
 
@@ -67,18 +68,20 @@ export async function POST(req: NextRequest) {
     // -- 4. Use admin client (bypasses RLS) --------------------------
     const supabase = createAdminClient();
 
-    // -- 5. Idempotency check ----------------------------------------
+    // -- 5. Idempotency and conflict check ---------------------------
     const { data: existing } = await supabase
       .from("bookings")
-      .select("id, status")
-      .eq("payment_intent_id", paymentIntentId)
+      .select("id, status, payment_intent_id")
+      .eq("id", booking_id)
       .maybeSingle();
 
-    if (existing && existing.status === "confirmed") {
+    const transition = classifyPaymentTransition(existing, paymentIntentId);
+    if (transition !== "confirm") {
       return NextResponse.json({
         received: true,
-        idempotent: true,
-        booking_id: existing.id,
+        idempotent: transition === "duplicate",
+        conflict: transition === "conflict",
+        booking_id: existing?.id,
       });
     }
 
@@ -95,6 +98,7 @@ export async function POST(req: NextRequest) {
         updated_at: new Date().toISOString(),
       })
       .eq("id", booking_id)
+      .eq("status", "pending")
       .select("id, total_price, spot_id, guest_id, start_time, end_time")
       .single();
 
