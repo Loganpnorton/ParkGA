@@ -2,6 +2,8 @@
 
 ParkGA is a full-stack parking marketplace for finding, listing, booking, and paying for privately managed parking in Georgia. The application covers the customer, host, payment, notification, and administrative sides of a two-sided marketplace.
 
+![ParkGA marketplace home](docs/parkga-home.png)
+
 ## Highlights
 
 - Map-based parking discovery and detailed listing pages
@@ -50,7 +52,12 @@ Scheduled reminder requests must include `Authorization: Bearer <CRON_SECRET>`.
 ```bash
 npm run lint
 npm run typecheck
+npm test
 npm run build
 ```
 
+The automated suite covers booking validation and pricing, guest/host authorization decisions, Stripe webhook idempotency and conflict handling, and notification fan-out. CI runs it without production credentials.
+
 The scripts in `scripts/` exercise payment, webhook, and notification integrations against developer accounts. Review their inputs before running them.
+
+The repository screenshot was captured from a verified production build using placeholder public Supabase configuration. The previously configured Vercel URL is no longer an active deployment; use the local walkthrough in [`docs/demo-script.md`](docs/demo-script.md) until a replacement deployment is published.
