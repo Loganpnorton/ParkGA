@@ -4,6 +4,8 @@ ParkGA is a full-stack parking marketplace for finding, listing, booking, and pa
 
 ![ParkGA marketplace home](docs/parkga-home.png)
 
+[Watch the 75-second demo](docs/demo.mp4)
+
 ## Highlights
 
 - Map-based parking discovery and detailed listing pages
